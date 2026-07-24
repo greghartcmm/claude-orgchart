@@ -26,7 +26,7 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
 #header-logomark span { display: block; border-radius: 1.5px; background: #8ECAE6; }
 #header-logomark span.dim { opacity: .28; }
 #header h1 { font-size: 14px; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
-#header-sub { font-size: 10px; color: rgba(142,202,230,.72); margin-top: 2px; font-weight: 500; }
+#header-sub { font-size: 10px; color: rgba(142,202,230,.72); margin-top: 2px; font-weight: 500; transition: opacity .5s ease; }
 .hdr-div { width: 1px; height: 20px; background: rgba(255,255,255,.18); flex-shrink: 0; }
 #header-spacer { flex: 1; }
 #search {
@@ -52,6 +52,15 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
   flex-shrink: 0; transition: background .12s;
 }
 .hbtn-icon:hover, .hbtn-icon.dd-open { background: rgba(255,255,255,.22); }
+.hbtn-analyze {
+  background: rgba(142,202,230,.15); border: 1px solid rgba(142,202,230,.5);
+  color: #8ECAE6; padding: 0 11px; border-radius: 6px;
+  cursor: pointer; font-size: 11px; font-family: inherit; font-weight: 600;
+  white-space: nowrap; height: 28px;
+  display: inline-flex; align-items: center; gap: 5px;
+  flex-shrink: 0; transition: background .12s, border-color .12s;
+}
+.hbtn-analyze:hover { background: rgba(142,202,230,.28); border-color: rgba(142,202,230,.8); }
 #zoom-control {
   display: inline-flex; align-items: center; gap: 3px;
   background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.2);
@@ -344,7 +353,8 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
 
 .w-divider {
   display: flex; align-items: center; gap: 10px;
-  color: #d0d8e0; font-size: 11px; margin: 12px 0;
+  color: #b8c8d4; font-size: 9.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em; margin: 14px 0 10px;
 }
 .w-divider::before, .w-divider::after {
   content:''; flex:1; height:1px; background:#eef0f3;
@@ -423,6 +433,97 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
   font-family: inherit;
 }
 #help-close:hover { background: rgba(255,255,255,.28); }
+
+/* ── Analyze modal ── */
+#analyze-overlay {
+  display: none; position: fixed; inset: 0; z-index: 850;
+  background: rgba(0,0,0,.5);
+  align-items: center; justify-content: center;
+}
+#analyze-overlay.open { display: flex; }
+#analyze-box {
+  background: #fff; border-radius: 14px;
+  width: min(620px, 92vw);
+  box-shadow: 0 12px 48px rgba(0,0,0,.22);
+  font-family: 'IBM Plex Sans', sans-serif;
+  display: flex; flex-direction: column;
+  max-height: 88vh;
+}
+#analyze-header {
+  background: #023047; color: #fff;
+  padding: 15px 20px; border-radius: 14px 14px 0 0;
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+#analyze-header-left { display: flex; align-items: center; gap: 10px; }
+#analyze-header h2 { font-size: 15px; font-weight: 700; }
+#analyze-header-sub { font-size: 10.5px; color: rgba(142,202,230,.75); margin-top: 2px; }
+#analyze-close {
+  background: rgba(255,255,255,.15); border: none; color: #fff;
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  font-family: inherit; flex-shrink: 0;
+}
+#analyze-close:hover { background: rgba(255,255,255,.28); }
+#analyze-body { padding: 20px 22px; overflow-y: auto; flex: 1; }
+.az-steps {
+  display: flex; gap: 10px; margin-bottom: 18px;
+}
+.az-step {
+  flex: 1; background: #f4f8fb; border-radius: 8px;
+  padding: 11px 13px; border: 1px solid #dde8f0;
+}
+.az-step-num {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #023047; color: #fff;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 7px;
+}
+.az-step-head { font-size: 11px; font-weight: 700; color: #023047; margin-bottom: 3px; }
+.az-step-desc { font-size: 10.5px; color: #666; line-height: 1.5; }
+.az-covers-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: #888; margin-bottom: 8px;
+}
+.az-covers {
+  display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 16px;
+}
+.az-pill {
+  background: #E6F3FB; color: #023047;
+  font-size: 10.5px; font-weight: 600;
+  padding: 3px 9px; border-radius: 20px;
+}
+.az-textarea-wrap { position: relative; }
+#analyze-textarea {
+  width: 100%; height: 160px; resize: none;
+  border: 1px solid #dde3ea; border-radius: 7px;
+  padding: 10px 12px; font-size: 11px; font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  color: #334; line-height: 1.5; outline: none; background: #fafbfc;
+}
+#analyze-textarea:focus { border-color: #8ECAE6; }
+#analyze-footer {
+  padding: 14px 22px 18px; border-top: 1px solid #eaedf0;
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+#analyze-copy-btn {
+  background: #023047; color: #fff; border: none;
+  padding: 0 18px; height: 34px; border-radius: 7px;
+  font-size: 12px; font-weight: 700; font-family: inherit;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0; transition: background .12s;
+}
+#analyze-copy-btn:hover { background: #01344f; }
+#analyze-copy-btn.copied { background: #1a6b63; }
+#analyze-open-btn {
+  background: none; border: 1px solid #dde3ea; color: #444;
+  padding: 0 14px; height: 34px; border-radius: 7px;
+  font-size: 12px; font-family: inherit; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  flex-shrink: 0; transition: border-color .12s;
+  text-decoration: none;
+}
+#analyze-open-btn:hover { border-color: #8ECAE6; color: #023047; }
+#analyze-footer-note { font-size: 10.5px; color: #aaa; line-height: 1.4; }
 #help-body { padding: 24px 28px 28px; }
 .help-section { margin-bottom: 24px; }
 .help-section:last-child { margin-bottom: 0; }
@@ -633,7 +734,13 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
   </div>
 
   <!-- PNG (top-level) -->
-  <button class="hbtn" onclick="exportPNG()">🖼 PNG</button>
+  <button class="hbtn" onclick="exportPNG()">🖼 Export PNG</button>
+
+  <!-- Analyze — hidden, WIP
+  <div class="hdr-div"></div>
+  <button class="hbtn-analyze" onclick="copyAnalysisPrompt()">✦ Analyze</button>
+  <div class="hdr-div"></div>
+  -->
 
   <!-- Help (icon only) -->
   <button class="hbtn-icon" onclick="showHelp()" title="Instructions">?</button>
@@ -663,14 +770,17 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
           <span class="dim"></span><span></span>
         </div>
         <div id="welcome-tagline">Build your org.<br>Skip <em>PowerPoint.</em></div>
-        <div id="welcome-sub">Visual org charts from Workday data — in seconds, not slides.</div>
+        <div id="welcome-sub">Your org chart. Not a 45-minute PowerPoint incident.</div>
       </div>
       <div id="welcome-left-foot">CoverMyMeds · Internal tool</div>
     </div>
 
     <!-- Right action panel -->
     <div id="welcome-right">
-      <div id="welcome-right-label">How do you want to start?</div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;">
+        <div id="welcome-right-label">How do you want to start?</div>
+        <button style="background:none;border:none;font-size:10.5px;color:#8ECAE6;font-family:inherit;cursor:pointer;font-weight:600;padding:0;" onclick="showHelp()">? Instructions</button>
+      </div>
 
       <!-- Default options -->
       <div id="welcome-options">
@@ -695,7 +805,7 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
           <div class="w-option-arrow">›</div>
         </button>
 
-        <div class="w-divider">or</div>
+        <div class="w-divider">Resume a previous chart</div>
 
         <!-- Option 3: Restore JSON -->
         <button class="w-option w-opt-c" onclick="document.getElementById('welcome-json-in').click()">
@@ -743,11 +853,7 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
       <div id="welcome-error"></div>
 
       <div id="welcome-foot">
-        <button class="w-foot-link" onclick="showHelp()">? Instructions</button>
-        <div style="display:flex;gap:14px;align-items:center;">
-          <a class="w-foot-link" id="download-link" download="claude-orgchart.html" href="#">⬇ Download for offline use</a>
-          <button class="w-foot-link" onclick="dismissWelcome()">Skip — start blank</button>
-        </div>
+        <a class="w-foot-link" id="download-link" download="claude-orgchart.html" href="#">⬇ Download for offline use</a>
       </div>
     </div>
 
@@ -783,6 +889,56 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
     <div style="display:flex;gap:8px;">
       <button class="btn-p" onclick="confirmRootPicker()">Build Chart</button>
       <button class="btn-s" onclick="hideRootPicker()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="analyze-overlay" onclick="analyzeOverlayClick(event)">
+  <div id="analyze-box">
+    <div id="analyze-header">
+      <div id="analyze-header-left">
+        <div>
+          <h2>✦ Analyze with Claude</h2>
+          <div id="analyze-header-sub">Your org data + analysis prompt — ready to paste</div>
+        </div>
+      </div>
+      <button id="analyze-close" onclick="hideAnalyze()">✕</button>
+    </div>
+    <div id="analyze-body">
+      <div class="az-steps">
+        <div class="az-step">
+          <div class="az-step-num">1</div>
+          <div class="az-step-head">Copy the prompt</div>
+          <div class="az-step-desc">It's already copied to your clipboard. Use the button below if you need it again.</div>
+        </div>
+        <div class="az-step">
+          <div class="az-step-num">2</div>
+          <div class="az-step-head">Open Claude</div>
+          <div class="az-step-desc">Go to claude.ai and start a new chat.</div>
+        </div>
+        <div class="az-step">
+          <div class="az-step-num">3</div>
+          <div class="az-step-head">Paste &amp; send</div>
+          <div class="az-step-desc">Paste the prompt and hit enter. Results in under a minute.</div>
+        </div>
+      </div>
+      <div class="az-covers-label">Analysis covers</div>
+      <div class="az-covers">
+        <span class="az-pill">Span of control</span>
+        <span class="az-pill">Org structure &amp; depth</span>
+        <span class="az-pill">Risk areas</span>
+        <span class="az-pill">Balance &amp; design</span>
+        <span class="az-pill">AI readiness</span>
+        <span class="az-pill">Overall assessment</span>
+      </div>
+      <div class="az-textarea-wrap">
+        <textarea id="analyze-textarea" readonly spellcheck="false"></textarea>
+      </div>
+    </div>
+    <div id="analyze-footer">
+      <button id="analyze-copy-btn" onclick="recopyprompt()">📋 Copy again</button>
+      <a id="analyze-open-btn" href="https://claude.ai" target="_blank">Open Claude ↗</a>
+      <div id="analyze-footer-note">Prompt includes your org structure, titles, levels,<br>managers, and status flags as of today.</div>
     </div>
   </div>
 </div>
@@ -3277,6 +3433,148 @@ function onHSpacingChange(val){
 function resetColors(){if(!confirm('Reset all colors?'))return;nodeState={};render();}
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// ANALYZE WITH CLAUDE
+// ─────────────────────────────────────────────────────────────────────────────
+function buildAnalysisPrompt(){
+  const today = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const allIds = Object.keys(people);
+
+  // Separate humans from AI agents (agents are tagged in nodeState)
+  const agentIds = new Set(allIds.filter(id => (nodeState[id]||'default') === 'agent'));
+  const humanIds = allIds.filter(id => !agentIds.has(id));
+  const openCount = humanIds.filter(id => people[id].name && people[id].name.toLowerCase().startsWith('open')).length;
+  const agentCount = agentIds.size;
+
+  // Serialize humans with correct managerId field
+  const humanRows = humanIds.map(id => {
+    const p = people[id];
+    const mgrName = p.managerId && people[p.managerId] ? people[p.managerId].name : '—';
+    const state = nodeState[id] || 'default';
+    let status = 'Active';
+    if (state === 'open')   status = 'Open Role';
+    if (state === 'hold')   status = 'Hold';
+    if (p.name && p.name.toLowerCase().startsWith('open')) status = 'Open Role';
+    return `${p.name} | ${p.title||'—'} | ${p.level||'—'} | ${mgrName} | ${status}`;
+  });
+
+  // Serialize AI agents separately
+  const agentRows = [...agentIds].map(id => {
+    const p = people[id];
+    const mgrName = p.managerId && people[p.managerId] ? people[p.managerId].name : '—';
+    return `${p.name} | ${p.title||'AI Agent'} | — | ${mgrName} | AI Agent`;
+  });
+
+  const agentSection = agentCount > 0
+    ? `\nAI AGENTS (${agentCount}) — listed separately, do not count as headcount or span:\n${agentRows.join('\n')}\n`
+    : '';
+
+  return `You are an organizational design advisor analyzing a org chart for a VP-level leader at a health technology company. The manager column is fully populated from the chart data — use it as ground truth for all reporting relationships. Do not infer or guess structure. Be direct and concise; skip preamble.
+
+Org data format: Name | Title | Level | Manager | Status
+Level scale: P1–P5 = individual contributors (ascending seniority); M1–M6 = managers (ascending seniority); M6 = VP.
+Status: Active | Open Role | Hold | AI Agent
+
+---
+
+1. SPAN OF CONTROL
+
+Part A — Per-manager span
+Calculate the org-wide average number of direct reports per manager.
+Benchmark against health technology companies:
+- Elite: 6–8
+- Healthy: 4–6
+- Watch: 3–4 (may signal over-management)
+- Problem: <3 or >9
+
+Flag only exceptions — managers meaningfully outside the healthy range. Skip anyone within normal bounds.
+
+Part B — Manager-to-IC density
+Calculate the ratio of managers to individual contributors across the whole org.
+Use this scale for a healthcare technology PM org:
+- 1:2–3   Too heavy. More leaders than the work justifies. Directors tend to do IC work. Signals consolidation opportunity.
+- 1:4–5   Defensible if complex. Works in high-coordination or high-regulation environments, but only if managers are operating strategically.
+- 1:5–7   Sweet spot for healthcare tech PM orgs. Right balance of oversight and IC empowerment.
+- 1:7–10  Lean but watchable. Efficient if the manager layer is strong and ICs are experienced. Can strain during large cross-org initiatives.
+- 1:10+   Too thin for this org's complexity. Managers can't meaningfully coach or coordinate at this ratio.
+
+State the current ratio, classify it, and note what it implies.
+
+2. ORG STRUCTURE & DESIGN
+- Layer count from VP to deepest IC
+- Overall shape assessment (flat/tall/mixed) and whether it fits the headcount
+- Flag any structural anomalies: orphaned nodes, inverted levels, single-direct-report managers
+- Note any team-size imbalances across peer functions
+
+3. RISK AREAS
+Cover only the top 3–4 genuine risks. Focus on: key person dependencies, open roles creating coverage gaps, and functions with no structural backup. Skip anything minor.
+
+4. AI TRANSFORMATION READINESS
+Do not analyze individual job titles. Instead assess the org as a whole:
+- How is this org structured for a world where AI agents handle increasing execution work? Consider the ratio of strategic/judgment roles to process/coordination roles.
+- Where in the structure is AI integration already visible (note any AI Agent nodes in the data)?
+- What structural changes would most accelerate AI adoption — e.g. consolidation, elevation of certain functions, reduction of coordination layers?
+- What is the single biggest structural risk as AI scales into this org?
+
+5. OVERALL ASSESSMENT
+Open with a one-line header in this exact format: [Org name] — [Top leader name] ([manager-to-IC ratio])
+Then two labeled sections, 2–3 bullets each, tight:
+
+Works:
+- [what is structurally sound]
+- [what is working well]
+
+Watch:
+- [top risk or concern]
+- [second risk or structural issue to monitor]
+- [optional third if genuinely significant]
+
+---
+
+ORG CHART DATA
+As of: ${today} | Headcount: ${humanIds.length} people${openCount > 0 ? ` (${openCount} open)` : ''}${agentCount > 0 ? ` + ${agentCount} AI agent${agentCount>1?'s':''}` : ''}
+
+${humanRows.join('\n')}${agentSection}`;
+}
+
+function copyPromptToClipboard(prompt){
+  return navigator.clipboard.writeText(prompt).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = prompt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  });
+}
+
+function copyAnalysisPrompt(){
+  if(!rootId || !people[rootId]){ toast('⚠ No chart loaded — load an org first.'); return; }
+  const prompt = buildAnalysisPrompt();
+  // Populate textarea
+  const ta = document.getElementById('analyze-textarea');
+  ta.value = prompt;
+  // Auto-copy then open modal
+  copyPromptToClipboard(prompt).then(()=>{
+    document.getElementById('analyze-overlay').classList.add('open');
+  });
+}
+
+function recopyprompt(){
+  const prompt = document.getElementById('analyze-textarea').value;
+  const btn = document.getElementById('analyze-copy-btn');
+  copyPromptToClipboard(prompt).then(()=>{
+    btn.textContent = '✓ Copied'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.innerHTML = '📋 Copy again'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function hideAnalyze(){
+  document.getElementById('analyze-overlay').classList.remove('open');
+}
+
+function analyzeOverlayClick(e){
+  if(e.target === document.getElementById('analyze-overlay')) hideAnalyze();
+}
+
 // UTILS
 // ─────────────────────────────────────────────────────────────────────────────
 let toastT;
@@ -3313,6 +3611,50 @@ if(_hasSave){
   render();
   showWelcome();
 }
+
+// ── Rotating taglines ──────────────────────────────────────────────────────
+(function(){
+  const lines = [
+    'Your org chart. Not a 45-minute PowerPoint incident.',
+    'Move one box without destroying three others? Wild concept.',
+    'Org charts that don\'t fall apart when you touch them.',
+    'Built for people who\'ve ever screamed at a connector line.',
+    'Drag one box. Ruin everything. — not here.'
+  ];
+  let idx = 0;
+
+  function rotateTag(elId){
+    const el = document.getElementById(elId);
+    if(!el) return;
+    el.style.opacity = '0';
+    setTimeout(()=>{
+      idx = (idx + 1) % lines.length;
+      el.textContent = lines[idx];
+      el.style.opacity = '1';
+    }, 500);
+  }
+
+  // Initialise both elements to first line
+  ['header-sub','welcome-sub'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el && !el.dataset.managed){
+      el.dataset.managed = '1';
+      el.style.transition = 'opacity .5s ease';
+      el.textContent = lines[0];
+    }
+  });
+
+  // Rotate every 4 seconds, both elements in sync
+  setInterval(()=>{
+    idx = (idx + 1) % lines.length;
+    ['header-sub','welcome-sub'].forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.style.opacity = '0';
+      setTimeout(()=>{ el.textContent = lines[idx]; el.style.opacity = '1'; }, 500);
+    });
+  }, 4000);
+})();
 </script>
 </body>
 </html>
