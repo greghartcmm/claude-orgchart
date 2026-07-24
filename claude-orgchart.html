@@ -577,6 +577,11 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
         <span class="ddp-icon">⬇</span>
         <div><div class="ddp-name">Export JSON</div><div class="ddp-desc">Portable backup — share or move between computers</div></div>
       </button>
+      <div class="ddp-hr"></div>
+      <a class="ddp-item" id="header-download-link" download="claude-orgchart.html" href="#" onclick="closeDds()">
+        <span class="ddp-icon">⬇</span>
+        <div><div class="ddp-name">Download for offline use</div><div class="ddp-desc">Save this tool to your computer</div></div>
+      </a>
     </div>
   </div>
 
@@ -712,7 +717,10 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
 
       <div id="welcome-foot">
         <button class="w-foot-link" onclick="showHelp()">? Instructions</button>
-        <button class="w-foot-link" onclick="dismissWelcome()">Skip — start blank</button>
+        <div style="display:flex;gap:14px;align-items:center;">
+          <a class="w-foot-link" id="download-link" download="claude-orgchart.html" href="#">⬇ Download for offline use</a>
+          <button class="w-foot-link" onclick="dismissWelcome()">Skip — start blank</button>
+        </div>
       </div>
     </div>
 
@@ -2795,7 +2803,6 @@ let _lpFiltered     = [];    // currently filtered subset
 // ── Load master org from repo URL ─────────────────────────────────────────────
 async function loadMasterFromRepo(){
   dismissWelcome();
-  // Open the leader picker immediately with a loading state
   document.getElementById('leader-picker-list').innerHTML =
     '<div id="leader-picker-loading">Loading org data…</div>';
   document.getElementById('leader-picker-search').value = '';
@@ -2803,15 +2810,28 @@ async function loadMasterFromRepo(){
 
   try {
     const resp = await fetch(MASTER_ORG_URL);
-    if(!resp.ok) throw new Error('Could not fetch org file (' + resp.status + '). Check that data/Chrysanthi_Hand_Department.xlsx exists in the repo.');
+    if(!resp.ok) throw new Error('fetch_failed');
     const buffer = await resp.arrayBuffer();
-    // Reuse the existing master parse + leader-picker flow
-    const fakeFile = { name: 'Chrysanthi_Hand_Department.xlsx' };
+    const fakeFile = { name: 'Chrysanthi Hand Department.xlsx' };
     await _parseMasterBuffer(buffer, fakeFile);
   } catch(err){
-    document.getElementById('leader-picker-list').innerHTML =
-      `<div style="padding:24px;text-align:center;color:#c0392b;font-size:13px;">⚠ ${err.message}</div>`;
-    console.error(err);
+    // Running offline (file://) or file not in repo yet — fall back to file picker
+    document.getElementById('leader-picker-list').innerHTML = `
+      <div style="padding:28px 24px;text-align:center;">
+        <div style="font-size:22px;margin-bottom:10px;">📂</div>
+        <div style="font-size:13px;font-weight:600;color:#023047;margin-bottom:6px;">Running offline?</div>
+        <div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:18px;">
+          The org data file couldn't be loaded automatically.<br>
+          Select <b>Chrysanthi Hand Department.xlsx</b> from your computer.
+        </div>
+        <button onclick="document.getElementById('master-fallback-in').click()"
+          style="background:#023047;color:#fff;border:none;padding:9px 20px;border-radius:7px;
+                 font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+          Select file…
+        </button>
+        <input type="file" id="master-fallback-in" accept=".xlsx,.xls" style="display:none"
+               onchange="loadMasterWorkday(event)">
+      </div>`;
   }
 }
 
@@ -3013,6 +3033,15 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 // INIT
 // ─────────────────────────────────────────────────────────────────────────────
 initData();
+
+// Wire download links to point at the current page URL
+(function(){
+  const url = window.location.href.split('?')[0];
+  ['download-link','header-download-link'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.href = url;
+  });
+})();
 
 // Show welcome screen if no browser save exists
 const _hasSave = !!localStorage.getItem('orgchart_v5');
