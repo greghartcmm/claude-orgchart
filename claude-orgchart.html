@@ -1265,10 +1265,30 @@ function showMenu(id, nodeEl){
   if(id!==rootId) h+=`<div class="ctx-act danger" onclick="removeNode('${id}')">🗑 Remove (incl. all reports)</div>`;
 
   menu.innerHTML=h;
+  // Render off-screen first to measure actual height
+  menu.style.visibility='hidden';
+  menu.style.top='-9999px';
+  menu.style.left='-9999px';
   menu.classList.add('open');
   const nr=nodeEl.getBoundingClientRect();
-  menu.style.top  = Math.min(nr.bottom+4, window.innerHeight-340)+'px';
-  menu.style.left = Math.max(4, Math.min(nr.left, window.innerWidth-220))+'px';
+  const mh=menu.offsetHeight;
+  const mw=menu.offsetWidth||220;
+  const pad=6;
+  // Decide vertical position: prefer below node, flip above if it would clip
+  let top;
+  if(nr.bottom+pad+mh <= window.innerHeight){
+    top = nr.bottom+pad;
+  } else if(nr.top-pad-mh >= 0){
+    top = nr.top-pad-mh;
+  } else {
+    // Neither fits cleanly — anchor to bottom of viewport with padding
+    top = Math.max(pad, window.innerHeight-mh-pad);
+  }
+  // Horizontal: prefer aligning to node left, clamp to viewport
+  const left = Math.max(pad, Math.min(nr.left, window.innerWidth-mw-pad));
+  menu.style.top=top+'px';
+  menu.style.left=left+'px';
+  menu.style.visibility='';
 }
 
 function moveSibling(id, dir){
