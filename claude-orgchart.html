@@ -13,60 +13,105 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
 #header {
   position: fixed; top: 0; left: 0; right: 0; z-index: 300;
   background: #023047; color: #fff;
-  padding: 10px 18px;
-  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 18px; height: 48px;
+  display: flex; align-items: center; gap: 7px;
   box-shadow: 0 2px 10px rgba(0,0,0,.3);
-  flex-wrap: wrap; gap: 6px;
 }
-#header h1 { font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
-#header p  { font-size: 10px; opacity: .6; margin-top: 1px; }
-#header-right { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.hbtn {
-  background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.26);
-  color: #fff; padding: 5px 10px; border-radius: 6px;
-  cursor: pointer; font-size: 11px; font-family: inherit; white-space: nowrap;
+#header-wordmark { display: flex; align-items: center; gap: 9px; flex-shrink: 0; margin-right: 2px; }
+#header-logomark {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 3px; width: 20px; height: 20px; flex-shrink: 0;
 }
-.hbtn:hover { background: rgba(255,255,255,.24); }
-.spacing-control {
-  display: flex; align-items: center; gap: 10px;
-  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22);
-  border-radius: 6px; padding: 4px 12px; font-size: 11px; color: #fff;
-  white-space: nowrap;
-}
-.zoom-control {
-  display: flex; align-items: center; gap: 6px;
-  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22);
-  border-radius: 6px; padding: 4px 10px; font-size: 11px; color: #fff;
-  white-space: nowrap;
-}
-.zoom-control button {
-  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
-  color: #fff; width: 22px; height: 22px; border-radius: 4px;
-  cursor: pointer; font-size: 13px; line-height: 1;
-  display: flex; align-items: center; justify-content: center;
-  font-family: inherit; padding: 0;
-  transition: background .15s;
-}
-.zoom-control button:hover { background: rgba(255,255,255,.3); }
-#zoom-val { min-width: 34px; text-align: center; }
-.spacing-group { display: flex; align-items: center; gap: 5px; }
-.spacing-group span.lbl { opacity: .75; }
-.spacing-range {
-  -webkit-appearance: none; appearance: none;
-  width: 70px; height: 3px; border-radius: 2px;
-  background: rgba(255,255,255,.4); outline: none; cursor: pointer;
-}
-.spacing-range::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 12px; height: 12px; border-radius: 50%;
-  background: #fff; cursor: pointer;
-}
+#header-logomark span { display: block; border-radius: 1.5px; background: #8ECAE6; }
+#header-logomark span.dim { opacity: .28; }
+#header h1 { font-size: 14px; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
+#header-sub { font-size: 10px; color: rgba(142,202,230,.72); margin-top: 2px; font-weight: 500; }
+.hdr-div { width: 1px; height: 20px; background: rgba(255,255,255,.18); flex-shrink: 0; }
+#header-spacer { flex: 1; }
 #search {
   padding: 5px 10px; border-radius: 6px; border: none;
-  font-size: 12px; width: 150px;
-  background: rgba(255,255,255,.13); color: #fff; outline: none; font-family: inherit;
+  font-size: 12px; width: 155px; flex-shrink: 0;
+  background: rgba(255,255,255,.12); color: #fff; outline: none; font-family: inherit;
 }
-#search::placeholder { color: rgba(255,255,255,.45); }
+#search::placeholder { color: rgba(255,255,255,.38); }
+.hbtn {
+  background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; padding: 0 11px; border-radius: 6px;
+  cursor: pointer; font-size: 11px; font-family: inherit;
+  white-space: nowrap; height: 28px;
+  display: inline-flex; align-items: center; gap: 5px;
+  flex-shrink: 0; transition: background .12s;
+}
+.hbtn:hover, .hbtn.dd-open { background: rgba(255,255,255,.22); }
+.hbtn-icon {
+  background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; border-radius: 6px; cursor: pointer; font-size: 13px;
+  font-family: inherit; width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background .12s;
+}
+.hbtn-icon:hover, .hbtn-icon.dd-open { background: rgba(255,255,255,.22); }
+#zoom-control {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 6px; padding: 0 6px; height: 28px; flex-shrink: 0;
+}
+#zoom-control button {
+  background: none; border: none; color: #fff;
+  width: 18px; height: 18px; border-radius: 3px;
+  cursor: pointer; font-size: 14px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit; padding: 0; transition: background .12s;
+}
+#zoom-control button:hover { background: rgba(255,255,255,.18); }
+#zoom-val { font-size: 11px; min-width: 30px; text-align: center; }
+#zoom-fit { font-size: 10.5px !important; width: auto !important; padding: 0 6px !important; }
+.hdr-dd { position: relative; display: inline-flex; flex-shrink: 0; }
+.hdr-dd-panel {
+  display: none; position: fixed; top: 52px;
+  background: #fff; border-radius: 9px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.07);
+  min-width: 210px; z-index: 400; overflow: hidden;
+}
+.hdr-dd-panel.open { display: block; }
+.ddp-section {
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: #aaa; padding: 8px 14px 3px;
+}
+.ddp-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 9px 14px; font-size: 12px; color: #1a2a35;
+  cursor: pointer; border-bottom: 1px solid #f3f5f7;
+  background: none; border-left: none; border-right: none; border-top: none;
+  width: 100%; text-align: left; font-family: inherit;
+}
+.ddp-item:last-child { border-bottom: none; }
+.ddp-item:hover { background: #f0f7fb; }
+.ddp-icon { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+.ddp-name { font-weight: 600; line-height: 1.3; }
+.ddp-desc { font-size: 10.5px; color: #888; margin-top: 2px; line-height: 1.3; }
+.ddp-hr { border: none; border-top: 1px solid #eaedf0; margin: 3px 0; }
+#view-panel { min-width: 220px; padding: 14px 16px; }
+#view-panel .ddp-section { padding: 0 0 8px 0; }
+.vp-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.vp-row:last-of-type { margin-bottom: 0; }
+.vp-key { font-size: 11px; font-weight: 600; color: #555; width: 64px; flex-shrink: 0; }
+.vp-range {
+  flex: 1; -webkit-appearance: none; appearance: none;
+  height: 3px; border-radius: 2px; background: #d0dce6; outline: none; cursor: pointer;
+}
+.vp-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 12px; height: 12px; border-radius: 50%; background: #023047; cursor: pointer;
+}
+.vp-val { font-size: 11px; color: #888; width: 30px; text-align: right; }
+.vp-hr { border: none; border-top: 1px solid #eaedf0; margin: 11px 0; }
+.vp-action {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: #1a2a35; padding: 5px 0; cursor: pointer;
+  background: none; border: none; font-family: inherit; width: 100%; text-align: left;
+}
+.vp-action:hover { color: #023047; }
 
 /* ── Sub-bars ── */
 .subbar { position: fixed; left: 0; right: 0; z-index: 200; background: #fff; border-bottom: 1px solid #dde3ea; }
@@ -156,49 +201,189 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
 .move-opt-name  { font-weight: 600; color: #023047; }
 .move-opt-title { font-size: 10px; color: #888; margin-top: 1px; }
 
-/* ── Welcome screen ── */
+/* ── Welcome screen — Split Panel ── */
 #welcome-overlay {
   display: none; position: fixed; inset: 0; z-index: 800;
-  background: #f8fafc;
+  background: #f0f4f8;
   align-items: center; justify-content: center;
-  flex-direction: column; gap: 0;
 }
 #welcome-overlay.show { display: flex; }
-#welcome-box {
-  background: #fff; border-radius: 16px; padding: 48px 52px;
-  box-shadow: 0 8px 40px rgba(2,48,71,.12);
-  max-width: 480px; width: 90%; text-align: center;
+
+#welcome-panel {
+  display: flex;
+  width: min(820px, 96vw);
+  min-height: min(520px, 90vh);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 16px 56px rgba(2,48,71,.18), 0 2px 8px rgba(2,48,71,.08);
 }
-#welcome-box h2 { font-size: 22px; font-weight: 700; color: #023047; margin-bottom: 10px; }
-#welcome-box p  { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 28px; }
-#welcome-box .steps { text-align: left; background: #f0f6fb; border-radius: 8px; padding: 14px 18px; margin-bottom: 28px; font-size: 12px; color: #444; line-height: 1.9; }
-#welcome-box .steps b { color: #023047; }
-#upload-workday-btn, #load-json-btn {
-  display: block; width: 100%; text-align: center;
-  padding: 12px 28px; border-radius: 8px; font-size: 14px; font-weight: 600;
-  cursor: pointer; font-family: inherit;
-  transition: background .15s;
+
+/* Left brand panel */
+#welcome-left {
+  width: 260px; flex-shrink: 0;
+  background: #023047;
+  padding: 44px 36px;
+  display: flex; flex-direction: column; justify-content: space-between;
 }
-#upload-workday-btn {
-  background: #023047; color: #fff; border: none;
+#welcome-left-top {}
+#welcome-logomark {
+  width: 44px; height: 44px;
+  border: 1.5px solid rgba(142,202,230,.35);
+  border-radius: 10px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 5px; padding: 10px;
+  margin-bottom: 28px;
 }
-#upload-workday-btn:hover { background: #035577; }
-#load-json-btn {
-  background: #fff; color: #023047; border: 2px solid #023047;
-  margin-top: 0;
+#welcome-logomark span {
+  display: block; border-radius: 2px;
+  background: #8ECAE6;
 }
-#load-json-btn:hover { background: #f0f4f8; }
-#workday-file-in { display: none; }
-#welcome-skip { display: block; margin-top: 14px; font-size: 11px; color: #aaa; cursor: pointer; text-decoration: underline; }
-#welcome-skip:hover { color: #023047; }
-#welcome-error { color: #c0392b; font-size: 12px; margin-top: 12px; display: none; }
-#welcome-help-btn {
-  display: block; width: 100%; margin-top: 16px;
-  background: transparent; border: 1px solid #d0dce6; color: #888;
-  padding: 8px 0; border-radius: 8px; font-size: 12px; font-family: inherit;
-  cursor: pointer; transition: border-color .15s, color .15s;
+#welcome-logomark span.dim { opacity: .3; }
+#welcome-tagline {
+  font-size: 24px; font-weight: 700; color: #fff;
+  letter-spacing: -.03em; line-height: 1.15; margin-bottom: 12px;
 }
-#welcome-help-btn:hover { border-color: #023047; color: #023047; }
+#welcome-tagline em {
+  font-style: normal; color: #8ECAE6;
+}
+#welcome-sub {
+  font-size: 12px; color: rgba(142,202,230,.7);
+  line-height: 1.7;
+}
+#welcome-left-foot {
+  font-size: 10px; color: rgba(255,255,255,.22);
+  letter-spacing: .02em;
+}
+
+/* Right action panel */
+#welcome-right {
+  flex: 1;
+  background: #fff;
+  padding: 44px 40px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+#welcome-right-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: #8ECAE6; margin-bottom: 18px;
+}
+
+/* Workday drill-in (hidden by default) */
+#wd-drilldown { display: none; }
+#wd-drilldown.open { display: block; }
+#welcome-options { }
+#welcome-options.hidden { display: none; }
+
+.w-back-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: none; border: 1px solid #d0dce6; color: #555;
+  border-radius: 6px; padding: 4px 11px; font-size: 11px;
+  cursor: pointer; font-family: inherit; margin-bottom: 18px;
+  transition: border-color .15s, color .15s;
+}
+.w-back-btn:hover { border-color: #023047; color: #023047; }
+
+#wd-drilldown h3 {
+  font-size: 14px; font-weight: 700; color: #023047; margin-bottom: 16px;
+}
+.wd-step {
+  display: flex; gap: 11px; margin-bottom: 12px; align-items: flex-start;
+}
+.wd-step-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #023047; color: #fff;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.wd-step-text { font-size: 12px; color: #444; line-height: 1.65; }
+.wd-step-text b { color: #023047; }
+.wd-pill {
+  display: inline-block; background: #E6F3FB; color: #023047;
+  border-radius: 4px; padding: 1px 7px;
+  font-size: 11px; font-weight: 600;
+}
+.wd-upload-zone {
+  border: 2px dashed #c8d8e4; border-radius: 10px;
+  padding: 20px 16px; text-align: center; cursor: pointer;
+  margin-top: 16px; transition: border-color .15s, background .15s;
+}
+.wd-upload-zone:hover { border-color: #219EBC; background: #f5fbff; }
+.wd-upload-zone-icon { font-size: 24px; margin-bottom: 6px; }
+.wd-upload-zone-label { font-size: 13px; font-weight: 600; color: #023047; margin-bottom: 2px; }
+.wd-upload-zone-sub { font-size: 11px; color: #888; }
+
+/* Action option cards */
+.w-option {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; border-radius: 10px;
+  cursor: pointer; border: 1.5px solid #eaeff4;
+  background: #fff; width: 100%; text-align: left;
+  font-family: inherit; margin-bottom: 9px;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.w-option:last-of-type { margin-bottom: 0; }
+.w-option:hover {
+  border-color: #8ECAE6;
+  box-shadow: 0 2px 12px rgba(33,158,188,.1);
+  background: #fafeff;
+}
+.w-option-icon {
+  width: 38px; height: 38px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+}
+.w-opt-a .w-option-icon { background: #E6F3FB; }
+.w-opt-b .w-option-icon { background: #EDF9F0; }
+.w-opt-c .w-option-icon { background: #f4f4f6; }
+.w-option-body { flex: 1; }
+.w-option-name { font-size: 13px; font-weight: 600; color: #023047; margin-bottom: 2px; }
+.w-option-desc { font-size: 11px; color: #7a8fa0; line-height: 1.45; }
+.w-option-arrow { font-size: 13px; color: #c8d8e4; flex-shrink: 0; }
+.w-option:hover .w-option-arrow { color: #8ECAE6; }
+
+.w-divider {
+  display: flex; align-items: center; gap: 10px;
+  color: #d0d8e0; font-size: 11px; margin: 12px 0;
+}
+.w-divider::before, .w-divider::after {
+  content:''; flex:1; height:1px; background:#eef0f3;
+}
+
+#welcome-error { color: #c0392b; font-size: 12px; margin-top: 10px; display: none; }
+
+#welcome-foot {
+  margin-top: 18px; padding-top: 14px;
+  border-top: 1px solid #f0f4f8;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.w-foot-link {
+  font-size: 11px; color: #b0bcc8; cursor: pointer;
+  background: none; border: none; font-family: inherit;
+  transition: color .15s; padding: 0;
+}
+.w-foot-link:hover { color: #023047; }
+
+/* Mobile: stack panels vertically */
+@media (max-width: 600px) {
+  #welcome-panel {
+    flex-direction: column;
+    width: 96vw;
+    min-height: unset;
+    border-radius: 12px;
+  }
+  #welcome-left {
+    width: 100%; padding: 28px 24px 24px;
+    flex-direction: row; align-items: center; gap: 16px;
+    justify-content: flex-start;
+  }
+  #welcome-logomark { margin-bottom: 0; flex-shrink: 0; }
+  #welcome-tagline { font-size: 18px; margin-bottom: 2px; }
+  #welcome-sub { display: none; }
+  #welcome-left-foot { display: none; }
+  #welcome-left-top { display: flex; align-items: center; gap: 14px; }
+  #welcome-right { padding: 24px 20px 28px; }
+  #welcome-right-label { margin-bottom: 14px; }
+}
 
 /* ── Add-person (+) hover button on nodes ── */
 .add-btn {
@@ -263,6 +448,61 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
   font-size: 12px; color: #5a2c00; line-height: 1.6; margin-top: 14px;
 }
 
+/* ── Leader-picker modal ── */
+#leader-picker-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.48); z-index: 950;
+  align-items: center; justify-content: center;
+}
+#leader-picker-overlay.open { display: flex; }
+#leader-picker-box {
+  background: #fff; border-radius: 13px;
+  width: min(520px, 92vw); max-height: 80vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 12px 48px rgba(0,0,0,.25);
+  overflow: hidden;
+}
+#leader-picker-header {
+  background: #023047; color: #fff;
+  padding: 16px 20px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-shrink: 0;
+}
+#leader-picker-header h2 { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+#leader-picker-header p  { font-size: 11px; opacity: .65; }
+#leader-picker-close {
+  background: rgba(255,255,255,.15); border: none; color: #fff;
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  font-family: inherit; flex-shrink: 0; margin-left: 12px;
+}
+#leader-picker-close:hover { background: rgba(255,255,255,.28); }
+#leader-picker-search-wrap {
+  padding: 12px 16px; border-bottom: 1px solid #eee; flex-shrink: 0;
+}
+#leader-picker-search {
+  width: 100%; padding: 8px 11px; border: 1px solid #dde;
+  border-radius: 6px; font-size: 13px; font-family: inherit; outline: none;
+}
+#leader-picker-search:focus { border-color: #219EBC; }
+#leader-picker-list {
+  overflow-y: auto; flex: 1;
+}
+#leader-picker-loading {
+  padding: 32px; text-align: center; font-size: 13px; color: #888;
+}
+.lp-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; cursor: pointer; border-bottom: 1px solid #f0f0f0;
+  transition: background .1s;
+}
+.lp-row:last-child { border-bottom: none; }
+.lp-row:hover { background: #f0f7fb; }
+.lp-name  { font-weight: 600; font-size: 13px; color: #023047; }
+.lp-title { font-size: 11px; color: #666; margin-top: 2px; }
+.lp-meta  { font-size: 11px; color: #888; white-space: nowrap; text-align: right; margin-left: 12px; }
+.lp-meta-count { font-weight: 600; color: #023047; }
+
 /* ── Toast ── */
 #toast {
   position: fixed; bottom: 16px; right: 18px; z-index: 999;
@@ -276,40 +516,104 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
 <body>
 
 <div id="header">
-  <div>
-    <h1>Org Chart Builder</h1>
-    <p>Org Chart Builder</p>
+  <!-- Wordmark -->
+  <div id="header-wordmark">
+    <div id="header-logomark">
+      <span></span><span class="dim"></span>
+      <span class="dim"></span><span></span>
+    </div>
+    <div>
+      <h1>Org Chart Builder</h1>
+      <div id="header-sub">No chart loaded</div>
+    </div>
   </div>
-  <div id="header-right">
-    <input id="search" type="text" placeholder="Search people…" oninput="onSearch(this.value)">
-    <button class="hbtn" onclick="document.getElementById('workday-upload-hdr').click()">⬆ Load Workday</button>
+
+  <div class="hdr-div"></div>
+  <input id="search" type="text" placeholder="Search people…" oninput="onSearch(this.value)">
+  <div id="header-spacer"></div>
+
+  <!-- Load dropdown -->
+  <div class="hdr-dd">
+    <button class="hbtn" id="load-btn" onclick="toggleDd('load-panel', 'load-btn')">⬆ Load ▾</button>
+    <div class="hdr-dd-panel" id="load-panel">
+      <div class="ddp-section">From Workday</div>
+      <button class="ddp-item" onclick="closeDds();document.getElementById('workday-upload-hdr').click()">
+        <span class="ddp-icon">📂</span>
+        <div><div class="ddp-name">My org</div><div class="ddp-desc">Upload my team's Workday export</div></div>
+      </button>
+      <button class="ddp-item" onclick="closeDds();loadMasterFromRepo()">
+        <span class="ddp-icon">🏢</span>
+        <div><div class="ddp-name">Pick a leader's org</div><div class="ddp-desc">Browse the full CMM org</div></div>
+      </button>
+      <div class="ddp-hr"></div>
+      <div class="ddp-section">From file</div>
+      <button class="ddp-item" onclick="closeDds();document.getElementById('file-in').click()">
+        <span class="ddp-icon">📁</span>
+        <div><div class="ddp-name">Import JSON</div><div class="ddp-desc">Restore a previously saved chart</div></div>
+      </button>
+    </div>
+    <!-- Hidden file inputs -->
     <input type="file" id="workday-upload-hdr" accept=".xlsx,.xls" style="display:none" onchange="loadWorkday(event)">
-    <button class="hbtn" onclick="exportJSON()">⬇ Export JSON</button>
-    <button class="hbtn" onclick="document.getElementById('file-in').click()">⬆ Import JSON</button>
-    <input type="file" id="file-in" accept=".json" style="display:none" onchange="importJSON(event)">
-    <button class="hbtn" onclick="saveState()">💾 Browser Save</button>
-    <button class="hbtn" onclick="loadState()">📂 Browser Load</button>
-    <button class="hbtn" onclick="exportPNG()">🖼 Export PNG</button>
-    <button class="hbtn" onclick="showHelp()">? Help</button>
-    <div class="zoom-control">
-      <button onclick="zoomStep(-10)">−</button>
-      <span id="zoom-val">100%</span>
-      <button onclick="zoomStep(10)">+</button>
-      <button onclick="zoomFit()" title="Fit to screen" style="width:auto;padding:0 6px;font-size:11px;">Fit</button>
+    <input type="file" id="master-upload-hdr"  accept=".xlsx,.xls" style="display:none" onchange="loadMasterWorkday(event)">
+    <input type="file" id="file-in"            accept=".json"      style="display:none" onchange="importJSON(event)">
+  </div>
+
+  <!-- Save dropdown -->
+  <div class="hdr-dd">
+    <button class="hbtn" id="save-btn" onclick="toggleDd('save-panel', 'save-btn')">💾 Save ▾</button>
+    <div class="hdr-dd-panel" id="save-panel">
+      <div class="ddp-section">Browser</div>
+      <button class="ddp-item" onclick="closeDds();saveState()">
+        <span class="ddp-icon">💾</span>
+        <div><div class="ddp-name">Browser Save</div><div class="ddp-desc">Auto-restores next session in this browser</div></div>
+      </button>
+      <button class="ddp-item" onclick="closeDds();loadState()">
+        <span class="ddp-icon">📂</span>
+        <div><div class="ddp-name">Browser Load</div><div class="ddp-desc">Restore last browser save</div></div>
+      </button>
+      <div class="ddp-hr"></div>
+      <div class="ddp-section">File</div>
+      <button class="ddp-item" onclick="closeDds();exportJSON()">
+        <span class="ddp-icon">⬇</span>
+        <div><div class="ddp-name">Export JSON</div><div class="ddp-desc">Portable backup — share or move between computers</div></div>
+      </button>
     </div>
-    <div class="spacing-control">
-      <div class="spacing-group">
-        <span class="lbl">V</span>
-        <input type="range" class="spacing-range" id="vspacing-slider" min="20" max="100" value="100" oninput="onVSpacingChange(this.value)">
-        <span id="vspacing-val">100%</span>
+  </div>
+
+  <!-- View dropdown -->
+  <div class="hdr-dd">
+    <button class="hbtn" id="view-btn" onclick="toggleDd('view-panel', 'view-btn')">👁 View ▾</button>
+    <div class="hdr-dd-panel" id="view-panel">
+      <div class="ddp-section">Spacing</div>
+      <div class="vp-row">
+        <span class="vp-key">Vertical</span>
+        <input type="range" class="vp-range" id="vspacing-slider" min="20" max="100" value="100" oninput="onVSpacingChange(this.value)">
+        <span class="vp-val" id="vspacing-val">100%</span>
       </div>
-      <div style="width:1px;height:16px;background:rgba(255,255,255,.25)"></div>
-      <div class="spacing-group">
-        <span class="lbl">H</span>
-        <input type="range" class="spacing-range" id="hspacing-slider" min="20" max="100" value="100" oninput="onHSpacingChange(this.value)">
-        <span id="hspacing-val">100%</span>
+      <div class="vp-row">
+        <span class="vp-key">Horizontal</span>
+        <input type="range" class="vp-range" id="hspacing-slider" min="20" max="100" value="100" oninput="onHSpacingChange(this.value)">
+        <span class="vp-val" id="hspacing-val">100%</span>
       </div>
+      <div class="vp-hr"></div>
+      <button class="vp-action" onclick="closeDds();resetColors()">🎨 Reset all colors</button>
     </div>
+  </div>
+
+  <!-- PNG (top-level) -->
+  <button class="hbtn" onclick="exportPNG()">🖼 PNG</button>
+
+  <!-- Help (icon only) -->
+  <button class="hbtn-icon" onclick="showHelp()" title="Instructions">?</button>
+
+  <div class="hdr-div"></div>
+
+  <!-- Zoom -->
+  <div id="zoom-control">
+    <button onclick="zoomStep(-10)">−</button>
+    <span id="zoom-val">100%</span>
+    <button onclick="zoomStep(10)">+</button>
+    <button id="zoom-fit" onclick="zoomFit()">Fit</button>
   </div>
 </div>
 
@@ -317,34 +621,100 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
 <div id="search-results" class="subbar"></div>
 
 <div id="welcome-overlay">
-  <div id="welcome-box">
-    <h2>Org Chart Builder</h2>
-    <p>Because PowerPoint's org chart tool is terrible, here's a better Claude-created org chart creator that just requires a Workday report export.</p>
-    <div class="steps">
-      <b>How to export from Workday:</b><br>
-      1. Log in to Workday and click the <b>search bar</b> at the top<br>
-      2. Search for one of these two reports (both work):<br>
-      &nbsp;&nbsp;&nbsp;• <b>My Org Chart</b> — shows your org as a hierarchy<br>
-      &nbsp;&nbsp;&nbsp;• <b>Org Chart</b> — broader org chart report<br>
-      Select the result listed under <b>Reports</b> (not Tasks or People)<br>
-      3. The report loads showing your team. In the top-right corner, click the <b>Excel icon</b> and choose <b>Excel (.xlsx)</b> to download<br>
-      4. Upload that file below
+  <div id="welcome-panel">
+
+    <!-- Left brand panel -->
+    <div id="welcome-left">
+      <div id="welcome-left-top">
+        <div id="welcome-logomark">
+          <span></span><span class="dim"></span>
+          <span class="dim"></span><span></span>
+        </div>
+        <div id="welcome-tagline">Build your org.<br>Skip <em>PowerPoint.</em></div>
+        <div id="welcome-sub">Visual org charts from Workday data — in seconds, not slides.</div>
+      </div>
+      <div id="welcome-left-foot">CoverMyMeds · Internal tool</div>
     </div>
-    <button id="upload-workday-btn" onclick="document.getElementById('workday-file-in').click()">
-      📂 Upload Workday Export
-    </button>
-    <input type="file" id="workday-file-in" accept=".xlsx,.xls" onchange="loadWorkday(event)">
-    <div style="display:flex;align-items:center;gap:12px;margin-top:14px;margin-bottom:14px;">
-      <div style="flex:1;height:1px;background:#e0e0e0;"></div>
-      <span style="font-size:11px;color:#aaa;">or</span>
-      <div style="flex:1;height:1px;background:#e0e0e0;"></div>
+
+    <!-- Right action panel -->
+    <div id="welcome-right">
+      <div id="welcome-right-label">How do you want to start?</div>
+
+      <!-- Default options -->
+      <div id="welcome-options">
+
+        <!-- Option 1: My org (shows Workday drill-in) -->
+        <button class="w-option w-opt-a" onclick="showWdDrilldown('single')">
+          <div class="w-option-icon">📂</div>
+          <div class="w-option-body">
+            <div class="w-option-name">My org</div>
+            <div class="w-option-desc">Upload my Workday export and build my team's chart</div>
+          </div>
+          <div class="w-option-arrow">›</div>
+        </button>
+
+        <!-- Option 2: Pick a leader (loads from repo directly) -->
+        <button class="w-option w-opt-b" onclick="loadMasterFromRepo()">
+          <div class="w-option-icon">🏢</div>
+          <div class="w-option-body">
+            <div class="w-option-name">Pick a leader's org</div>
+            <div class="w-option-desc">Browse the full CMM org and choose whose team to view</div>
+          </div>
+          <div class="w-option-arrow">›</div>
+        </button>
+
+        <div class="w-divider">or</div>
+
+        <!-- Option 3: Restore JSON -->
+        <button class="w-option w-opt-c" onclick="document.getElementById('welcome-json-in').click()">
+          <div class="w-option-icon">📁</div>
+          <div class="w-option-body">
+            <div class="w-option-name">Restore a saved chart</div>
+            <div class="w-option-desc">Load a JSON file from a previous session</div>
+          </div>
+          <div class="w-option-arrow">›</div>
+        </button>
+        <input type="file" id="welcome-json-in" accept=".json" style="display:none" onchange="loadJSONFromWelcome(event)">
+
+      </div>
+
+      <!-- Workday drill-in panel (shared for single + master) -->
+      <div id="wd-drilldown">
+        <button class="w-back-btn" onclick="hideWdDrilldown()">← Back</button>
+        <h3 id="wd-drilldown-title">Export from Workday</h3>
+        <div class="wd-step">
+          <div class="wd-step-num">1</div>
+          <div class="wd-step-text">In Workday, click the <b>search bar</b> at the top</div>
+        </div>
+        <div class="wd-step">
+          <div class="wd-step-num">2</div>
+          <div class="wd-step-text">Search for <span class="wd-pill">My Org Chart</span> or <span class="wd-pill">Org Chart</span> — select the result listed under <b>Reports</b>, not People</div>
+        </div>
+        <div class="wd-step">
+          <div class="wd-step-num">3</div>
+          <div class="wd-step-text">In the top-right corner, click the <b>Excel icon</b> and choose <span class="wd-pill">Excel (.xlsx)</span></div>
+        </div>
+        <div class="wd-step">
+          <div class="wd-step-num">4</div>
+          <div class="wd-step-text">Select the downloaded file below</div>
+        </div>
+        <div class="wd-upload-zone" onclick="triggerWdUpload()">
+          <div class="wd-upload-zone-icon">📂</div>
+          <div class="wd-upload-zone-label">Select your .xlsx file</div>
+          <div class="wd-upload-zone-sub" id="wd-upload-sub">My Org Chart or Org Chart export from Workday</div>
+        </div>
+        <!-- Hidden file inputs -->
+        <input type="file" id="workday-file-in"  accept=".xlsx,.xls" style="display:none" onchange="loadWorkday(event)">
+        <input type="file" id="master-file-in"   accept=".xlsx,.xls" style="display:none" onchange="loadMasterWorkday(event)">
+      </div>
+
+      <div id="welcome-error"></div>
+
+      <div id="welcome-foot">
+        <button class="w-foot-link" onclick="showHelp()">? Instructions</button>
+        <button class="w-foot-link" onclick="dismissWelcome()">Skip — start blank</button>
+      </div>
     </div>
-    <button onclick="document.getElementById('welcome-json-in').click()" id="load-json-btn">
-      📁 Load Saved JSON
-    </button>
-    <input type="file" id="welcome-json-in" accept=".json" style="display:none" onchange="loadJSONFromWelcome(event)">
-    <div id="welcome-error"></div>
-    <button onclick="showHelp()" id="welcome-help-btn">? Full Instructions</button>
 
   </div>
 </div>
@@ -535,10 +905,33 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
   </div>
 </div>
 
+<!-- ── Leader-picker modal ── -->
+<div id="leader-picker-overlay" onclick="if(event.target===this)hideLeaderPicker()">
+  <div id="leader-picker-box">
+    <div id="leader-picker-header">
+      <div>
+        <h2>Choose a leader</h2>
+        <p>Only people with direct reports are shown. Click a row to load their org.</p>
+      </div>
+      <button id="leader-picker-close" onclick="hideLeaderPicker()">✕</button>
+    </div>
+    <div id="leader-picker-search-wrap">
+      <input id="leader-picker-search" type="text" placeholder="Search by name or title…" oninput="filterLeaderPicker(this.value)">
+    </div>
+    <div id="leader-picker-list">
+      <div id="leader-picker-loading">Parsing file…</div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // CONFIG
 // ─────────────────────────────────────────────────────────────────────────────
+// URL to the master org XLSX stored in the repo.
+// Update this path if the file moves or the repo URL changes.
+const MASTER_ORG_URL = './Chrysanthi_Hand_Department.xlsx';
+
 const NODE_W   = 175;   // node width  (must match CSS)
 const NODE_H   = 64;    // matches fixed CSS height (60px) + 2px border top + 2px border bottom
 const H_GAP_BASE = 24;   // horizontal gap base
@@ -912,6 +1305,7 @@ function render(){
 
     renderLegend();
     layoutBars();
+    updateHeaderSub();
   });
 }
 
@@ -1635,9 +2029,36 @@ function importJSON(evt){
 // ── Welcome screen ───────────────────────────────────────────────────────────
 function showWelcome(){
   document.getElementById('welcome-overlay').classList.add('show');
+  hideWdDrilldown(); // always start at options view
 }
 function dismissWelcome(){
   document.getElementById('welcome-overlay').classList.remove('show');
+}
+
+let _wdMode = 'single'; // 'single' or 'master'
+function showWdDrilldown(mode){
+  _wdMode = mode;
+  document.getElementById('welcome-options').classList.add('hidden');
+  document.getElementById('wd-drilldown').classList.add('open');
+  const sub = document.getElementById('wd-upload-sub');
+  if(mode === 'master'){
+    document.getElementById('wd-drilldown-title').textContent = 'Export the full org from Workday';
+    sub.textContent = 'Full org export — you\'ll pick a leader after loading';
+  } else {
+    document.getElementById('wd-drilldown-title').textContent = 'Export from Workday';
+    sub.textContent = 'My Org Chart or Org Chart export from Workday';
+  }
+}
+function hideWdDrilldown(){
+  document.getElementById('welcome-options').classList.remove('hidden');
+  document.getElementById('wd-drilldown').classList.remove('open');
+}
+function triggerWdUpload(){
+  if(_wdMode === 'master'){
+    document.getElementById('master-file-in').click();
+  } else {
+    document.getElementById('workday-file-in').click();
+  }
 }
 function loadJSONFromWelcome(evt){
   const file = evt.target.files[0];
@@ -2362,6 +2783,210 @@ function hideRootPicker(){
 function confirmRootPicker(){
   const id = document.getElementById('root-picker-select').value;
   if(_pickerCallback) _pickerCallback(id);
+}
+
+// ── Leader-picker (master org XLSX) ──────────────────────────────────────────
+let _lpParsed       = null;  // full parsed array from master XLSX
+let _lpTempChildren = null;  // tempChildren map
+let _lpFile         = null;  // File reference for toast
+let _lpLeaders      = [];    // sorted leader list shown in modal
+let _lpFiltered     = [];    // currently filtered subset
+
+// ── Load master org from repo URL ─────────────────────────────────────────────
+async function loadMasterFromRepo(){
+  dismissWelcome();
+  // Open the leader picker immediately with a loading state
+  document.getElementById('leader-picker-list').innerHTML =
+    '<div id="leader-picker-loading">Loading org data…</div>';
+  document.getElementById('leader-picker-search').value = '';
+  showLeaderPicker();
+
+  try {
+    const resp = await fetch(MASTER_ORG_URL);
+    if(!resp.ok) throw new Error('Could not fetch org file (' + resp.status + '). Check that data/Chrysanthi_Hand_Department.xlsx exists in the repo.');
+    const buffer = await resp.arrayBuffer();
+    // Reuse the existing master parse + leader-picker flow
+    const fakeFile = { name: 'Chrysanthi_Hand_Department.xlsx' };
+    await _parseMasterBuffer(buffer, fakeFile);
+  } catch(err){
+    document.getElementById('leader-picker-list').innerHTML =
+      `<div style="padding:24px;text-align:center;color:#c0392b;font-size:13px;">⚠ ${err.message}</div>`;
+    console.error(err);
+  }
+}
+
+// Shared parse logic extracted from loadMasterWorkday so both paths use it
+async function _parseMasterBuffer(arrayBuffer, file){
+  const { rows, format } = await parseXLSX(arrayBuffer);
+  let parsed = [];
+  const nameToId = {};
+
+  if(format === 'myteam'){
+    rows.forEach((r, i) => {
+      const name = flipName(r.name), title = r.title, mgr = flipName(r.mgr), id = 'wd_' + i;
+      if(name) nameToId[name] = id;
+      parsed.push({ id, name, title, mgrName: mgr, managerId: null });
+    });
+    parsed = parsed.filter(p => p.name);
+  } else if(format === 'dept'){
+    const idMap = {}, rawParsed = [];
+    rows.forEach((r, i) => {
+      const uid = (r.uid||'').trim(), name = (r.name||'').trim(),
+            title = (r.title||'').trim(), reportsTo = (r.mgrUid||'').trim(), id = 'wd_' + i;
+      if(uid) idMap[uid] = id;
+      rawParsed.push({ id, uid, name, title, _reportsToUid: reportsTo, managerId: null });
+    });
+    rawParsed.forEach(p => { if(p._reportsToUid && idMap[p._reportsToUid]) p.managerId = idMap[p._reportsToUid]; });
+    const seenNames = new Set();
+    rawParsed.forEach(p => {
+      if(!p.name) return;
+      const mgr = rawParsed.find(r => r.id === p.managerId);
+      if(!(seenNames.has(p.name) && mgr && mgr.name === p.name)){
+        seenNames.add(p.name); parsed.push(p); if(p.name) nameToId[p.name] = p.id;
+      }
+    });
+  }
+
+  const tempChildren = {};
+  parsed.forEach(p => { tempChildren[p.id] = []; });
+  parsed.forEach(p => {
+    if(format === 'myteam') p.managerId = nameToId[p.mgrName] || null;
+    if(p.managerId && tempChildren[p.managerId]) tempChildren[p.managerId].push(p.id);
+  });
+
+  _lpParsed = parsed; _lpTempChildren = tempChildren; _lpFile = file;
+  _lpLeaders = buildLeaderList(parsed, tempChildren);
+  _lpFiltered = _lpLeaders.slice();
+
+  if(!_lpLeaders.length) throw new Error('No people with direct reports found in this file.');
+  renderLeaderRows(_lpFiltered);
+}
+
+function showLeaderPicker(){ document.getElementById('leader-picker-overlay').classList.add('open'); }
+function hideLeaderPicker(){
+  document.getElementById('leader-picker-overlay').classList.remove('open');
+  document.getElementById('leader-picker-search').value = '';
+}
+
+function buildLeaderList(parsed, tempChildren){
+  // Build descendant counter
+  const memo = {};
+  function countDesc(id){
+    if(memo[id] !== undefined) return memo[id];
+    memo[id] = (tempChildren[id]||[]).reduce((s,c) => s + 1 + countDesc(c), 0);
+    return memo[id];
+  }
+
+  // Anyone with ≥1 direct report, sorted by last name
+  const leaders = parsed
+    .filter(p => p.name && (tempChildren[p.id]||[]).length > 0)
+    .map(p => ({
+      id:      p.id,
+      name:    p.name,
+      title:   p.title || '',
+      directs: (tempChildren[p.id]||[]).length,
+      total:   countDesc(p.id) + 1,  // include self
+    }))
+    .sort((a,b) => {
+      // Sort by last name
+      const lastName = n => n.trim().split(' ').slice(-1)[0].toLowerCase();
+      return lastName(a.name).localeCompare(lastName(b.name));
+    });
+
+  return leaders;
+}
+
+function renderLeaderRows(leaders){
+  const list = document.getElementById('leader-picker-list');
+  if(!leaders.length){
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:#888;font-size:13px;">No matches found.</div>';
+    return;
+  }
+  list.innerHTML = leaders.map(l => `
+    <div class="lp-row" onclick="selectLeader('${l.id}')">
+      <div>
+        <div class="lp-name">${l.name}</div>
+        <div class="lp-title">${l.title}</div>
+      </div>
+      <div class="lp-meta">
+        <span class="lp-meta-count">${l.total}</span> in org<br>
+        <span style="color:#aaa">${l.directs} direct${l.directs===1?'':'s'}</span>
+      </div>
+    </div>`).join('');
+}
+
+function filterLeaderPicker(query){
+  const q = query.toLowerCase().trim();
+  _lpFiltered = q
+    ? _lpLeaders.filter(l => l.name.toLowerCase().includes(q) || l.title.toLowerCase().includes(q))
+    : _lpLeaders.slice();
+  renderLeaderRows(_lpFiltered);
+}
+
+function selectLeader(id){
+  const root = _lpParsed.find(p => p.id === id);
+  if(!root) return;
+  hideLeaderPicker();
+  buildOrgFromRoot(root, _lpParsed, _lpTempChildren, _lpFile);
+}
+
+function loadMasterWorkday(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  evt.target.value = '';
+  document.getElementById('leader-picker-list').innerHTML =
+    '<div id="leader-picker-loading">Parsing file…</div>';
+  document.getElementById('leader-picker-search').value = '';
+  showLeaderPicker();
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try { await _parseMasterBuffer(e.target.result, file); }
+    catch(err){
+      document.getElementById('leader-picker-list').innerHTML =
+        `<div style="padding:24px;text-align:center;color:#c0392b;font-size:13px;">⚠ ${err.message}</div>`;
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── Header dropdown logic ─────────────────────────────────────────────────────
+function toggleDd(panelId, btnId){
+  const panel = document.getElementById(panelId);
+  const btn   = document.getElementById(btnId);
+  const isOpen = panel.classList.contains('open');
+  closeDds();
+  if(!isOpen){
+    panel.classList.add('open');
+    btn.classList.add('dd-open');
+    // Position panel flush with button left edge (or right for view)
+    const rect = btn.getBoundingClientRect();
+    if(panelId === 'view-panel'){
+      panel.style.right  = (window.innerWidth - rect.right) + 'px';
+      panel.style.left   = 'auto';
+    } else {
+      panel.style.left   = rect.left + 'px';
+      panel.style.right  = 'auto';
+    }
+  }
+}
+function closeDds(){
+  document.querySelectorAll('.hdr-dd-panel').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.hbtn.dd-open, .hbtn-icon.dd-open').forEach(b => b.classList.remove('dd-open'));
+}
+// Close dropdowns on outside click
+document.addEventListener('click', e => {
+  if(!e.target.closest('.hdr-dd') && !e.target.closest('#view-panel')) closeDds();
+});
+
+// ── Header subtitle (updates when chart loads) ────────────────────────────────
+function updateHeaderSub(){
+  const sub = document.getElementById('header-sub');
+  if(!sub) return;
+  if(!people[rootId]){ sub.textContent = 'No chart loaded'; return; }
+  const root = people[rootId];
+  const count = Object.keys(people).length;
+  sub.textContent = root.name + ' · ' + count + ' ' + (count === 1 ? 'person' : 'people');
 }
 
 function saveState(){localStorage.setItem('orgchart_v5',JSON.stringify(buildSnapshot()));toast('✓ Saved to browser');}
