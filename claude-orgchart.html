@@ -796,49 +796,85 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
     <div id="help-body">
 
       <div class="help-section">
-        <h3>Getting Data from Workday</h3>
+        <h3>Loading an Org Chart</h3>
+        <div class="help-row">
+          <span class="help-tag">Welcome screen</span>
+          <div class="help-desc">When the tool opens, choose how to start: <b>My org</b> (your Workday export), <b>Pick a leader's org</b> (full CMM org, then select whose team), or <b>Restore a saved chart</b> (load a JSON). Click the logo or title at any time to return to this screen.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">⬆ Load ▾</span>
+          <div class="help-desc">The Load dropdown in the toolbar has three options: <b>My org</b> — upload your own Workday XLSX; <b>Pick a leader's org</b> — browse the full CMM org by leader; <b>Import JSON</b> — restore a previously saved chart file.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>My Org — Workday Export</h3>
         <div class="help-row">
           <span class="help-tag">Step 1</span>
-          <div class="help-desc">Log in to Workday and click the <b>search bar</b> at the top of the page.</div>
+          <div class="help-desc">Log in to Workday and click the <b>search bar</b> at the top.</div>
         </div>
         <div class="help-row">
           <span class="help-tag">Step 2</span>
-          <div class="help-desc">Search for <b>My Team Employment Data</b> and select the result listed under <b>Reports</b> (not Tasks or People). This is the preferred export — it includes the manager hierarchy the tool needs. If you can't find it, search for <b>My Org Chart</b> instead. Both formats work.</div>
+          <div class="help-desc">Search for <b>My Team Employment Data</b> and select the result under <b>Reports</b> (not Tasks or People). If unavailable, search for <b>My Org Chart</b> instead. Both formats work.</div>
         </div>
         <div class="help-row">
           <span class="help-tag">Step 3</span>
-          <div class="help-desc">The report loads showing your team. In the <b>top-right corner of the report</b>, click the <b>Excel icon</b> and choose <b>Excel (.xlsx)</b> to download the file.</div>
+          <div class="help-desc">In the top-right corner of the report, click the <b>Excel icon</b> → <b>Excel (.xlsx)</b> to download.</div>
         </div>
         <div class="help-row">
           <span class="help-tag">Step 4</span>
-          <div class="help-desc">Click <b>⬆ Load Workday</b> in the toolbar (or use the Upload button on the welcome screen). Select the .xlsx file you just downloaded. The chart builds automatically.</div>
+          <div class="help-desc">Click <b>Load ▾ → My org</b> (or the My org button on the welcome screen) and select your downloaded .xlsx file. The chart builds automatically.</div>
         </div>
         <div class="help-note">
-          <b>Root person prompt:</b> If the tool asks "Who is the top of this org?" after uploading, select the correct person from the dropdown and click Confirm. This happens when the file contains multiple potential root nodes.
+          <b>Root person prompt:</b> If the tool asks "Who is the top of this org?" after uploading, select the correct person and click Confirm. This happens when the file contains multiple potential root nodes.
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Pick a Leader's Org</h3>
+        <div class="help-row">
+          <span class="help-tag">How it works</span>
+          <div class="help-desc">Clicking <b>Pick a leader's org</b> loads the full CMM org file automatically and opens a searchable list of every person with direct reports. Click any row to load that person's org as the root of the chart.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Search</span>
+          <div class="help-desc">The search box at the top of the picker filters by name or title in real time. Cursor is placed here automatically when the picker opens.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Levels − / All / +</span>
+          <div class="help-desc">The stepper between search and the list controls how many levels below the selected leader to include. Default is <b>All</b>. Press <b>−</b> to step down (All → 8 → 7 → … → 1); press <b>+</b> to step back up. Setting <b>2</b> gives the leader plus their direct reports' teams — a clean executive summary view for large orgs like Chrissy's.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Contingent workers</span>
+          <div class="help-desc">Workday marks contingent workers with <b>[C]</b> in their name. If the selected org contains any, you'll be prompted to <b>Exclude</b> or <b>Include all</b> before loading. Excluding them keeps the chart focused on full-time headcount. Reload to change this choice.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Offline use</span>
+          <div class="help-desc">When running the tool locally (downloaded file), "Pick a leader's org" can't fetch the org file from the web automatically. It will prompt you to select the XLSX file manually instead.</div>
         </div>
       </div>
 
       <div class="help-section">
         <h3>Navigating the Chart</h3>
         <div class="help-row">
+          <span class="help-tag">Auto-fit on load</span>
+          <div class="help-desc">The chart automatically fits to the visible window when first loaded. Use <b>Fit</b> in the zoom strip anytime to re-fit.</div>
+        </div>
+        <div class="help-row">
           <span class="help-tag">Scroll / Pan</span>
-          <div class="help-desc">Use scrollbars or <b>click and drag</b> on the background to pan around the chart.</div>
+          <div class="help-desc">Use scrollbars or <b>click and drag</b> on the canvas background to pan around the chart.</div>
         </div>
         <div class="help-row">
           <span class="help-tag">Zoom − / +</span>
-          <div class="help-desc">Step zoom in 10% increments (range 20%–150%). Or hold <b>Ctrl</b> (Cmd on Mac) and scroll with the mouse wheel.</div>
+          <div class="help-desc">Step zoom in 10% increments. Or hold <b>Ctrl</b> (Cmd on Mac) and scroll with the mouse wheel. Range is 20%–150%.</div>
         </div>
         <div class="help-row">
-          <span class="help-tag">Fit</span>
-          <div class="help-desc">Scales the full chart to fit the visible window. Use this before taking a screenshot or exporting.</div>
-        </div>
-        <div class="help-row">
-          <span class="help-tag">V / H Sliders</span>
-          <div class="help-desc">Compress or expand <b>vertical</b> spacing (gap between a manager and their reports) and <b>horizontal</b> spacing (gap between sibling branches) independently. Drag left to compress, right to expand.</div>
-        </div>
-        <div class="help-row">
-          <span class="help-tag">Search</span>
+          <span class="help-tag">Search bar</span>
           <div class="help-desc">Type a name or title to find people. Click a result to scroll to and highlight that node on the chart.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">👁 View ▾</span>
+          <div class="help-desc">Opens the View panel with <b>Vertical spacing</b> (gap between manager and reports) and <b>Horizontal spacing</b> (gap between sibling branches) sliders. Also contains <b>Reset all colors</b> to clear all color states back to default.</div>
         </div>
       </div>
 
@@ -846,35 +882,62 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
         <h3>Editing the Chart</h3>
         <div class="help-row">
           <span class="help-tag">Click a node</span>
-          <div class="help-desc">Opens the context menu. Options: set a color state, toggle layout, collapse/expand children, edit name or title, move to a different manager, or remove the node.</div>
+          <div class="help-desc">Opens the context menu with all editing actions for that person.</div>
         </div>
         <div class="help-row">
-          <span class="help-tag">+ button</span>
-          <div class="help-desc">Appears at the bottom-right of a node on hover. Adds a new direct report under that person — useful for open or budgeted roles not yet in Workday.</div>
+          <span class="help-tag">Set color state</span>
+          <div class="help-desc">In the context menu, click any color state to apply it to the node — Default, Budgeted/Open, Reporting Change, Hold, or AI Agent. See Color States below.</div>
         </div>
         <div class="help-row">
-          <span class="help-tag">⇆ / ⇅ button</span>
-          <div class="help-desc">Appears at the top-right of a node on hover. Cycles that node's direct reports through three layouts — see Layout Modes below.</div>
+          <span class="help-tag">Toggle layout</span>
+          <div class="help-desc">In the context menu, cycle the node's layout between Horizontal, H+Sidebar, and Vertical. Also accessible via the <b>⇆ / ⇅</b> button that appears at the top-right of a node on hover.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Collapse / Expand</span>
+          <div class="help-desc">In the context menu, collapse a node to hide its subtree, or expand to show it again. Useful for focusing on one branch of a large chart.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">✏️ Edit Name / Title</span>
+          <div class="help-desc">In the context menu, edit the person's display name and title directly. Useful for correcting Workday data or adding role details.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">🔀 Move to Different Manager</span>
+          <div class="help-desc">In the context menu, reassign a person (and their entire subtree) to a different manager. Type to search. Not available for the root node.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">➕ Add Direct Report</span>
+          <div class="help-desc">In the context menu (or the <b>+</b> button on hover), add a new person under the selected node. Useful for open or budgeted roles not yet in Workday.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">🤖 Add AI Agent</span>
+          <div class="help-desc">Adds a teal-colored AI Agent node under the selected person — for visualizing AI roles or agent positions in the org structure.</div>
         </div>
         <div class="help-row">
           <span class="help-tag">◀ Move Left / Right ▶</span>
-          <div class="help-desc">In the context menu, reorders a person among their siblings — changes their left-to-right position within their manager's team.</div>
+          <div class="help-desc">Reorders a person among their siblings — changes their left-to-right position within their manager's team. Not available for root.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">🗑 Remove</span>
+          <div class="help-desc">Removes the person <b>and all of their direct reports</b> from the chart. Not available for root. This is permanent until you reload from a save.</div>
         </div>
       </div>
 
       <div class="help-section">
         <h3>Layout Modes</h3>
+        <div class="help-note" style="margin-bottom:10px;">
+          The chart picks a starting layout automatically based on org size and depth. You can override any node manually — manual overrides are preserved when you save and reload.
+        </div>
         <div class="help-row">
           <span class="help-tag">Horizontal</span>
-          <div class="help-desc">Direct reports displayed <b>side by side</b>. Best for managers with a small number of direct reports.</div>
+          <div class="help-desc">Direct reports displayed <b>side by side</b>. Best for managers with a small number of reports. Used automatically at the top levels of smaller orgs.</div>
         </div>
         <div class="help-row">
           <span class="help-tag">H+Sidebar</span>
-          <div class="help-desc">Sub-team leads go <b>horizontal</b>; individual contributors stack vertically on the right. Best for mixed teams where some reports have their own sub-trees and others don't.</div>
+          <div class="help-desc">Sub-team leads go <b>horizontal</b>; individual contributors stack vertically on the right. Best for mixed teams where some reports have sub-trees and others are individual contributors.</div>
         </div>
         <div class="help-row">
           <span class="help-tag">Vertical</span>
-          <div class="help-desc">All direct reports stacked in a <b>column</b>. Best for large teams or when horizontal space is limited.</div>
+          <div class="help-desc">All direct reports stacked in a <b>column</b>. Best for large teams or when horizontal space is limited. Used automatically for large orgs to control width.</div>
         </div>
       </div>
 
@@ -882,11 +945,11 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
         <h3>Color States</h3>
         <div class="help-row">
           <span class="help-tag" style="background:#fff;border-color:#023047;color:#023047">Default</span>
-          <div class="help-desc">Standard filled role — white background, navy border. Used for all active employees.</div>
+          <div class="help-desc">Standard filled role — white background, navy border.</div>
         </div>
         <div class="help-row">
           <span class="help-tag" style="background:#E6F3FB;border-color:#1A6EA8;color:#0a3d5a">Budgeted / Open</span>
-          <div class="help-desc">A role that is approved or budgeted but not yet filled. Use for open headcount or future positions.</div>
+          <div class="help-desc">Approved or budgeted role not yet filled. Use for open headcount or future positions.</div>
         </div>
         <div class="help-row">
           <span class="help-tag" style="background:#FFF2EB;border-color:#B85C00;color:#5a2c00">Reporting Change</span>
@@ -894,45 +957,79 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
         </div>
         <div class="help-row">
           <span class="help-tag" style="background:#EFEFEF;border-color:#999999;color:#444444">Hold</span>
-          <div class="help-desc">A role or person that is paused — hiring on hold, backfill delayed, or a position under review. Gray background signals it's inactive without removing it from the chart.</div>
+          <div class="help-desc">Role or person on pause — hiring on hold, backfill delayed, or position under review.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag" style="background:#E0F5F3;border-color:#1a6b63;color:#0d3b37">AI Agent</span>
+          <div class="help-desc">Teal color for AI Agent nodes added via <b>🤖 Add AI Agent</b> in the context menu.</div>
+        </div>
+        <div class="help-note">
+          Use <b>View ▾ → Reset all colors</b> to clear all color states back to Default at once.
         </div>
       </div>
 
       <div class="help-section">
         <h3>Saving Your Work</h3>
         <div class="help-note" style="margin-bottom:12px;">
-          <b>Important:</b> Any edits you make — colors, layouts, added roles, name corrections — only persist if you explicitly save. Closing the browser tab without saving will lose your changes.
+          <b>Important:</b> Edits only persist if you explicitly save. Closing the tab without saving loses your changes.
         </div>
         <div class="help-row">
-          <span class="help-tag">💾 Browser Save</span>
-          <div class="help-desc">Saves everything (colors, layouts, spacing, zoom) to your browser's local storage. The chart reloads automatically the next time you open this file in the same browser on the same computer. <b>Use this frequently while working.</b></div>
+          <span class="help-tag">💾 Save ▾</span>
+          <div class="help-desc">Opens the Save menu with three options: Browser Save, Browser Load, and Export JSON.</div>
         </div>
         <div class="help-row">
-          <span class="help-tag">⬇ Export JSON</span>
-          <div class="help-desc">Downloads a .json file with the complete chart state — all people, colors, layouts, and custom additions. Use this to back up your work, transfer to another computer, or share with someone else. <b>At the end of each session, export a JSON as a portable backup.</b></div>
+          <span class="help-tag">Browser Save</span>
+          <div class="help-desc">Saves everything — colors, layouts, spacing, zoom — to your browser's local storage. Reloads automatically next time you open the tool in the same browser on the same computer. <b>Use this frequently while working.</b></div>
         </div>
         <div class="help-row">
-          <span class="help-tag">📂 Browser Load</span>
-          <div class="help-desc">Manually restores the most recent browser save. Useful if you've made changes and want to revert to your last save.</div>
+          <span class="help-tag">Export JSON</span>
+          <div class="help-desc">Downloads a .json file with the complete chart state. Use this to back up, transfer to another computer, or share with someone else. The layout at time of export is frozen — reloading will always show the chart exactly as it was. <b>Export a JSON at the end of each session as a portable backup.</b></div>
         </div>
         <div class="help-row">
-          <span class="help-tag">⬆ Import JSON</span>
-          <div class="help-desc">Restores a previously exported JSON file, fully restoring the chart exactly as it was saved — on any computer.</div>
+          <span class="help-tag">Browser Load</span>
+          <div class="help-desc">Restores the most recent browser save. Useful if you've made changes and want to revert.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Import JSON</span>
+          <div class="help-desc">Under <b>Load ▾</b>, restores a previously exported JSON file exactly as it was saved — on any computer, any browser.</div>
         </div>
         <div class="help-note">
-          <b>Sharing with someone else:</b> Send them both the <b>claude-orgchart.html</b> file and your <b>.json export</b>. They open the HTML file, click Import JSON, and select your file. Browser Save is not transferable between computers.
+          <b>Sharing with someone else:</b> Send them the <b>claude-orgchart.html</b> file and your <b>.json export</b>. They open the HTML, click Load ▾ → Import JSON, and select your file. Browser saves are not transferable between computers.
         </div>
       </div>
 
       <div class="help-section">
         <h3>Exporting for Presentations</h3>
         <div class="help-row">
-          <span class="help-tag">🖼 Export PNG</span>
-          <div class="help-desc">Renders the full chart as a high-resolution PNG (2× retina quality) with a white background and no UI controls visible. Download and paste directly into PowerPoint or Teams. <b>Requires an internet connection.</b></div>
+          <span class="help-tag">🖼 PNG</span>
+          <div class="help-desc">Renders the full chart as a high-resolution PNG (2× retina quality) — white background, no UI controls. Paste directly into PowerPoint or Teams. Click <b>Fit</b> first to ensure the full chart is in frame. <b>Requires an internet connection.</b></div>
         </div>
         <div class="help-row">
           <span class="help-tag">Screenshot tip</span>
-          <div class="help-desc">If Export PNG is unavailable offline, use your OS screenshot tool (Windows: <b>Win+Shift+S</b> / Mac: <b>Cmd+Shift+4</b>). The layout toggle and + buttons are invisible when not hovering, so the capture will be clean. Click <b>Fit</b> first to get the full chart on screen.</div>
+          <div class="help-desc">If PNG is unavailable offline, use your OS screenshot tool: Windows <b>Win+Shift+S</b> / Mac <b>Cmd+Shift+4</b>. The ⇆ and + buttons are only visible on hover and won't appear in captures.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Offline Use</h3>
+        <div class="help-row">
+          <span class="help-tag">Download</span>
+          <div class="help-desc">Under <b>Save ▾ → Download for offline use</b> (or the link on the welcome screen footer), download the tool as a self-contained HTML file. Open it directly in any browser — no internet or server required.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">What works offline</span>
+          <div class="help-desc">Everything works offline except: <b>PNG export</b> (requires internet) and <b>Pick a leader's org</b> auto-fetch (will prompt you to select the XLSX manually instead).</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Fonts offline</span>
+          <div class="help-desc">The tool uses a Google Font (IBM Plex Sans) loaded from the web. Offline it falls back to your system's default sans-serif font — layout is unaffected.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Analyzing Your Org with Claude</h3>
+        <div class="help-note">
+          The tool doesn't have a built-in AI feature, but you can get span-of-control analysis, team structure feedback, manager-to-IC ratios, depth analysis, succession gaps, and more by exporting your chart as JSON (<b>Save ▾ → Export JSON</b>) and pasting it into a conversation at <b>claude.ai</b>.
         </div>
       </div>
 
@@ -940,7 +1037,6 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
   </div>
 </div>
 
-<!-- ── Leader-picker modal ── -->
 <div id="leader-picker-overlay" onclick="if(event.target===this)hideLeaderPicker()">
   <div id="leader-picker-box">
     <div id="leader-picker-header">
