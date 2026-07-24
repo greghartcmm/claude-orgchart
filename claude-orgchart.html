@@ -257,8 +257,8 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
   font-style: normal; color: #8ECAE6;
 }
 #welcome-sub {
-  font-size: 12px; color: rgba(142,202,230,.7);
-  line-height: 1.7;
+  font-size: 14px; color: rgba(142,202,230,.72);
+  line-height: 1.5; margin-top: 14px;
 }
 #welcome-left-foot {
   font-size: 10px; color: rgba(255,255,255,.22);
@@ -779,7 +779,7 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
     <div id="welcome-right">
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;">
         <div id="welcome-right-label">How do you want to start?</div>
-        <button style="background:none;border:none;font-size:10.5px;color:#8ECAE6;font-family:inherit;cursor:pointer;font-weight:600;padding:0;" onclick="showHelp()">? Instructions</button>
+        <button style="background:none;border:none;font-size:11px;color:#8ECAE6;font-family:inherit;cursor:pointer;font-weight:600;padding:0;letter-spacing:-.01em;" onclick="showHelp()">How to use this tool →</button>
       </div>
 
       <!-- Default options -->
@@ -3731,7 +3731,10 @@ showWelcome();
     'Move one box without destroying three others? Wild concept.',
     'Org charts that don\'t fall apart when you touch them.',
     'Built for people who\'ve ever screamed at a connector line.',
-    'Drag one box. Ruin everything. — not here.'
+    'Drag one box. Ruin everything. — not here.',
+    'Move one person. Nothing explodes. We swear.',
+    'Every box the same width. You\'re welcome.',
+    'Yes, we have trust issues with PowerPoint. Welcome to the support group.',
   ];
   let idx = 0;
 
