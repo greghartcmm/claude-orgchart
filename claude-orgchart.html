@@ -1090,7 +1090,12 @@ function autoLayout(id){
   if(!kids.length) return 'v';
 
   if(depth === 0) return 'h';
-  if(depth === 1) return 'h';
+  if(depth === 1){
+    // Only spread horizontally if root has a small number of direct reports.
+    // Large orgs (Chrissy-level) need vertical at depth 1 or the chart explodes.
+    const rootKids = (children[rootId]||[]).filter(k=>people[k]);
+    return rootKids.length <= 5 ? 'h' : 'v';
+  }
 
   // Depth 2+
   const kidManagers = kids.filter(k => (children[k]||[]).filter(c=>people[c]).length > 0);
