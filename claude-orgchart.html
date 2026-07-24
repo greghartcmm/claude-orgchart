@@ -3736,6 +3736,12 @@ showWelcome();
     'Every box the same width. You\'re welcome.',
     'Yes, we have trust issues with PowerPoint. Welcome to the support group.',
   ];
+
+  // Shuffle on load so rotation order is different every session
+  for(let i = lines.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [lines[i], lines[j]] = [lines[j], lines[i]];
+  }
   let idx = 0;
 
   function rotateTag(elId){
