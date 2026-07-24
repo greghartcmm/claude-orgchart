@@ -1056,18 +1056,7 @@ function autoLayout(id){
   if(!kids.length) return 'v';
 
   if(depth === 0) return 'h';
-
-  if(depth === 1){
-    const kidManagers = kids.filter(k => (children[k]||[]).filter(c=>people[c]).length > 0);
-    const kidLeaves   = kids.filter(k => (children[k]||[]).filter(c=>people[c]).length === 0);
-    // Mix of managers and leaves → hs keeps it compact
-    if(kidManagers.length > 0 && kidLeaves.length > 0) return 'hs';
-    // All managers → vertical to avoid explosive width
-    if(kidManagers.length > 0) return 'v';
-    // All leaves, small count → horizontal
-    if(kidLeaves.length <= 4) return 'h';
-    return 'v';
-  }
+  if(depth === 1) return 'h';
 
   // Depth 2+
   const kidManagers = kids.filter(k => (children[k]||[]).filter(c=>people[c]).length > 0);
@@ -3008,7 +2997,7 @@ function filterLeaderPicker(query){
   renderLeaderRows(_lpFiltered);
 }
 
-function isContingent(p){ return /\(C\)/i.test(p.name); }
+function isContingent(p){ return /\[C\]/i.test(p.name); }
 
 function selectLeader(id){
   const root = _lpParsed.find(p => p.id === id);
