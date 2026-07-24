@@ -1032,9 +1032,63 @@ function nodeDepth(id){
   }
   return d;
 }
+
+// Count all descendants of a node
+function countDesc(id, memo={}){
+  if(memo[id]!==undefined) return memo[id];
+  memo[id] = (children[id]||[]).filter(k=>people[k]).reduce((s,c)=>s+1+countDesc(c,memo),0);
+  return memo[id];
+}
+
+// Smart auto-layout: called once per node when no manual override exists.
+// Rules (in priority order):
+//  1. Root always horizontal — direct reports spread across
+//  2. Depth 1 nodes: horizontal if they have any children (are managers), vertical if leaf
+//  3. Deeper nodes: pick based on subtree shape
+//    - All children are leaves AND ≤6 kids → horizontal (compact row)
+//    - Mix of managers and leaves → hs (managers horizontal, leaves sidebar)
+//    - Children with large subtrees OR >8 kids → vertical
+//    - Otherwise horizontal if total width estimate fits
+function autoLayout(id){
+  const depth = nodeDepth(id);
+  const kids  = (children[id]||[]).filter(k=>people[k]);
+  if(!kids.length) return 'v'; // leaves don't matter
+
+  if(depth === 0) return 'h';
+
+  if(depth === 1){
+    // Direct reports of root: horizontal if they manage anyone, vertical if pure leaf
+    return kids.length > 0 ? 'h' : 'v';
+  }
+
+  // Depth 2+: analyse children
+  const kidManagers = kids.filter(k => (children[k]||[]).filter(c=>people[c]).length > 0);
+  const kidLeaves   = kids.filter(k => (children[k]||[]).filter(c=>people[c]).length === 0);
+  const totalKids   = kids.length;
+
+  // All leaves, small count → horizontal row
+  if(kidManagers.length === 0 && totalKids <= 6) return 'h';
+
+  // All leaves, large count → vertical (too wide horizontally)
+  if(kidManagers.length === 0 && totalKids > 6) return 'v';
+
+  // Mix of managers and leaves → hs (managers on bus, leaves in sidebar)
+  if(kidManagers.length > 0 && kidLeaves.length > 0) return 'hs';
+
+  // All children are managers
+  if(kidManagers.length <= 4){
+    // Small number of manager-children: check if going horizontal would explode width
+    // Estimate: each manager-child's subtree ≈ their descendant count * NODE_W
+    const maxSubtree = Math.max(...kidManagers.map(k => countDesc(k)));
+    if(maxSubtree <= 6) return 'h'; // manageable width
+  }
+
+  return 'v'; // default: vertical is always safe
+}
+
 function getLayout(id){
   if(nodeLayout.hasOwnProperty(id)) return nodeLayout[id];
-  return nodeDepth(id)===0 ? 'h' : 'v';
+  return autoLayout(id);
 }
 
 function initData(){
