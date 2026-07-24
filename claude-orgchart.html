@@ -2080,7 +2080,7 @@ function exportJSON(){
 function importJSON(evt){
   const file=evt.target.files[0]; if(!file) return;
   const r=new FileReader();
-  r.onload=e=>{try{applySnapshot(JSON.parse(e.target.result));render();toast('✓ '+file.name);}catch(err){alert('Error: '+err.message);}evt.target.value='';};
+  r.onload=e=>{try{applySnapshot(JSON.parse(e.target.result));render();setTimeout(zoomFit,120);toast('✓ '+file.name);}catch(err){alert('Error: '+err.message);}evt.target.value='';};
   r.readAsText(file);
 }
 // ── Welcome screen ───────────────────────────────────────────────────────────
@@ -2127,6 +2127,7 @@ function loadJSONFromWelcome(evt){
       applySnapshot(JSON.parse(e.target.result));
       render();
       dismissWelcome();
+      setTimeout(zoomFit, 120);
       toast('✓ Loaded '+file.name);
     } catch(err){ 
       const errEl = document.getElementById('welcome-error');
@@ -2529,6 +2530,8 @@ function buildOrgFromRoot(root, parsed, tempChildren, file){
   dismissWelcome();
   hideRootPicker();
   render();
+  // Fit to screen after layout settles, capped at 40% minimum
+  setTimeout(zoomFit, 120);
   toast('✓ Loaded ' + filteredParsed.length + ' people from ' + file.name);
 }
 
@@ -2575,7 +2578,7 @@ function zoomFit(){
   const scaleW = ww / cw;
   const scaleH = wh / ch;
   const scale  = Math.min(scaleW, scaleH, 1); // never zoom in beyond 100%
-  zoomLevel = Math.max(20, Math.round(scale * 100));
+  zoomLevel = Math.max(40, Math.round(scale * 100));
   applyZoom();
   // Scroll to top-left after fitting
   wrap.scrollLeft = 0;
@@ -3066,7 +3069,7 @@ function updateHeaderSub(){
 }
 
 function saveState(){localStorage.setItem('orgchart_v5',JSON.stringify(buildSnapshot()));toast('✓ Saved to browser');}
-function loadState(){const raw=localStorage.getItem('orgchart_v5');if(!raw){alert('No browser save found.');return;}applySnapshot(JSON.parse(raw));render();toast('✓ Loaded from browser');}
+function loadState(){const raw=localStorage.getItem('orgchart_v5');if(!raw){alert('No browser save found.');return;}applySnapshot(JSON.parse(raw));render();setTimeout(zoomFit,120);toast('✓ Loaded from browser');}
 function onVSpacingChange(val){
   vSpacingScale = val/100;
   document.getElementById('vspacing-val').textContent = val+'%';
