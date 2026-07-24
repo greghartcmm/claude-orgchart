@@ -1,0 +1,2391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Org Chart Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: hidden; }
+
+/* ── Header ── */
+#header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+  background: #023047; color: #fff;
+  padding: 10px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 2px 10px rgba(0,0,0,.3);
+  flex-wrap: wrap; gap: 6px;
+}
+#header h1 { font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
+#header p  { font-size: 10px; opacity: .6; margin-top: 1px; }
+#header-right { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.hbtn {
+  background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.26);
+  color: #fff; padding: 5px 10px; border-radius: 6px;
+  cursor: pointer; font-size: 11px; font-family: inherit; white-space: nowrap;
+}
+.hbtn:hover { background: rgba(255,255,255,.24); }
+.spacing-control {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22);
+  border-radius: 6px; padding: 4px 12px; font-size: 11px; color: #fff;
+  white-space: nowrap;
+}
+.zoom-control {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22);
+  border-radius: 6px; padding: 4px 10px; font-size: 11px; color: #fff;
+  white-space: nowrap;
+}
+.zoom-control button {
+  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
+  color: #fff; width: 22px; height: 22px; border-radius: 4px;
+  cursor: pointer; font-size: 13px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit; padding: 0;
+  transition: background .15s;
+}
+.zoom-control button:hover { background: rgba(255,255,255,.3); }
+#zoom-val { min-width: 34px; text-align: center; }
+.spacing-group { display: flex; align-items: center; gap: 5px; }
+.spacing-group span.lbl { opacity: .75; }
+.spacing-range {
+  -webkit-appearance: none; appearance: none;
+  width: 70px; height: 3px; border-radius: 2px;
+  background: rgba(255,255,255,.4); outline: none; cursor: pointer;
+}
+.spacing-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: #fff; cursor: pointer;
+}
+#search {
+  padding: 5px 10px; border-radius: 6px; border: none;
+  font-size: 12px; width: 150px;
+  background: rgba(255,255,255,.13); color: #fff; outline: none; font-family: inherit;
+}
+#search::placeholder { color: rgba(255,255,255,.45); }
+
+/* ── Sub-bars ── */
+.subbar { position: fixed; left: 0; right: 0; z-index: 200; background: #fff; border-bottom: 1px solid #dde3ea; }
+#legend { padding: 7px 18px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+#legend .lbl { font-size: 10px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: .05em; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #333; cursor: pointer; }
+.legend-swatch { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; flex-shrink: 0; }
+#legend-hint { margin-left: auto; font-size: 10px; color: #aaa; }
+#search-results { display: none; padding: 6px 18px; flex-wrap: wrap; gap: 6px; }
+.sr-tag { background: #e8f0fe; border-radius: 4px; padding: 3px 9px; font-size: 11px; color: #023047; cursor: pointer; }
+.sr-tag:hover { background: #d0e4ff; }
+
+/* ── Scroll canvas ── */
+#canvas-wrap {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  overflow: scroll; cursor: grab; background: #ffffff;
+}
+#canvas-wrap:active { cursor: grabbing; }
+#canvas { position: relative; transform-origin: top left; } /* sized by JS to fit tree */
+
+/* ── SVG behind nodes ── */
+#connector-svg { position: absolute; top: 0; left: 0; pointer-events: none; }
+
+/* ── Node boxes — absolutely positioned by layout engine ── */
+.node {
+  position: absolute;
+  border-radius: 0; border: 2px solid #023047;
+  background: #fff; color: #023047;
+  padding: 8px 28px 8px 11px;
+  width: 175px;
+  height: 60px;
+  display: flex; flex-direction: column; justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,.1);
+  user-select: none;
+  transition: box-shadow .15s, transform .1s;
+}
+.node:hover { box-shadow: 0 4px 14px rgba(0,0,0,.2); transform: translateY(-1px); }
+.node.highlighted { outline: 3px solid #FFB703; outline-offset: 2px; }
+.node-name  { font-weight: 700; font-size: 12px; line-height: 1.3; }
+.node-title { font-size: 10px; opacity: .72; margin-top: 3px; line-height: 1.3; }
+.layout-btn {
+  position: absolute; top: 5px; right: 6px;
+  background: transparent; border: none; font-size: 11px;
+  cursor: pointer; opacity: 0; padding: 0; color: inherit; line-height: 1;
+  transition: opacity .15s; pointer-events: none;
+}
+.node:hover .layout-btn { opacity: .7; pointer-events: auto; }
+.layout-btn:hover { opacity: 1 !important; }
+
+/* ── Context menu ── */
+#ctx-menu {
+  position: fixed; background: #fff; border: 1px solid #dde; border-radius: 9px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.18); z-index: 500; min-width: 215px;
+  display: none; overflow: hidden;
+}
+#ctx-menu.open { display: block; }
+.ctx-sec  { font-size: 9.5px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .06em; padding: 7px 12px 3px; }
+.ctx-item { display: flex; align-items: center; gap: 8px; padding: 5px 12px; cursor: pointer; font-size: 12px; color: #222; }
+.ctx-item:hover { background: #f5f7ff; }
+.ctx-swatch { width: 13px; height: 13px; border-radius: 3px; border: 2px solid; flex-shrink: 0; }
+.ctx-hr  { border: none; border-top: 1px solid #eee; margin: 4px 0; }
+.ctx-act { padding: 5px 12px; cursor: pointer; font-size: 12px; color: #023047; display: flex; align-items: center; gap: 6px; }
+.ctx-act:hover { background: #f5f7ff; }
+.ctx-act.danger { color: #c0392b; }
+
+/* ── Modal ── */
+#modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.45); z-index: 900; align-items: center; justify-content: center;
+}
+#modal-overlay.open { display: flex; }
+#modal { background: #fff; border-radius: 11px; padding: 24px; min-width: 310px; max-width: 380px; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+#modal h2 { font-size: 15px; font-weight: 700; color: #023047; margin-bottom: 14px; }
+.mlabel { display: block; font-size: 11px; font-weight: 600; color: #666; margin-top: 10px; margin-bottom: 3px; }
+.minput { width: 100%; padding: 7px 10px; border-radius: 5px; border: 1px solid #dde; font-size: 13px; font-family: inherit; outline: none; background: #fff; }
+.minput:focus { border-color: #219EBC; }
+.mbtns { display: flex; gap: 8px; margin-top: 14px; }
+.btn-p { background: #023047; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; }
+.btn-s { background: #f0f0f0; color: #333; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; font-family: inherit; }
+#move-list { max-height: 230px; overflow-y: auto; border: 1px solid #dde; border-radius: 5px; margin-top: 6px; }
+.move-opt { padding: 7px 11px; cursor: pointer; font-size: 12px; border-bottom: 1px solid #f0f0f0; }
+.move-opt:last-child { border-bottom: none; }
+.move-opt:hover { background: #f0f6ff; }
+.move-opt.selected { background: #dbeafe; }
+.move-opt-name  { font-weight: 600; color: #023047; }
+.move-opt-title { font-size: 10px; color: #888; margin-top: 1px; }
+
+/* ── Welcome screen ── */
+#welcome-overlay {
+  display: none; position: fixed; inset: 0; z-index: 800;
+  background: #f8fafc;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 0;
+}
+#welcome-overlay.show { display: flex; }
+#welcome-box {
+  background: #fff; border-radius: 16px; padding: 48px 52px;
+  box-shadow: 0 8px 40px rgba(2,48,71,.12);
+  max-width: 480px; width: 90%; text-align: center;
+}
+#welcome-box h2 { font-size: 22px; font-weight: 700; color: #023047; margin-bottom: 10px; }
+#welcome-box p  { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 28px; }
+#welcome-box .steps { text-align: left; background: #f0f6fb; border-radius: 8px; padding: 14px 18px; margin-bottom: 28px; font-size: 12px; color: #444; line-height: 1.9; }
+#welcome-box .steps b { color: #023047; }
+#upload-workday-btn, #load-json-btn {
+  display: block; width: 100%; text-align: center;
+  padding: 12px 28px; border-radius: 8px; font-size: 14px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  transition: background .15s;
+}
+#upload-workday-btn {
+  background: #023047; color: #fff; border: none;
+}
+#upload-workday-btn:hover { background: #035577; }
+#load-json-btn {
+  background: #fff; color: #023047; border: 2px solid #023047;
+  margin-top: 0;
+}
+#load-json-btn:hover { background: #f0f4f8; }
+#workday-file-in { display: none; }
+#welcome-skip { display: block; margin-top: 14px; font-size: 11px; color: #aaa; cursor: pointer; text-decoration: underline; }
+#welcome-skip:hover { color: #023047; }
+#welcome-error { color: #c0392b; font-size: 12px; margin-top: 12px; display: none; }
+#welcome-help-btn {
+  display: block; width: 100%; margin-top: 16px;
+  background: transparent; border: 1px solid #d0dce6; color: #888;
+  padding: 8px 0; border-radius: 8px; font-size: 12px; font-family: inherit;
+  cursor: pointer; transition: border-color .15s, color .15s;
+}
+#welcome-help-btn:hover { border-color: #023047; color: #023047; }
+
+/* ── Add-person (+) hover button on nodes ── */
+.add-btn {
+  position: absolute; bottom: 3px; right: 4px;
+  background: transparent; border: none; font-size: 13px;
+  cursor: pointer; opacity: 0; padding: 0; line-height: 1; color: inherit;
+  transition: opacity .15s; pointer-events: none;
+}
+.node:hover .add-btn { opacity: .6; pointer-events: auto; }
+.add-btn:hover { opacity: 1 !important; }
+
+/* ── Help modal ── */
+#help-overlay {
+  display: none; position: fixed; inset: 0; z-index: 850;
+  background: rgba(0,0,0,.5);
+  align-items: center; justify-content: center;
+}
+#help-overlay.open { display: flex; }
+#help-box {
+  background: #fff; border-radius: 14px;
+  width: min(680px, 92vw); max-height: 82vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 48px rgba(0,0,0,.22);
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+#help-box-header {
+  position: sticky; top: 0; background: #023047; color: #fff;
+  padding: 16px 24px; border-radius: 14px 14px 0 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+#help-box-header h2 { font-size: 16px; font-weight: 700; }
+#help-close {
+  background: rgba(255,255,255,.15); border: none; color: #fff;
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  font-family: inherit;
+}
+#help-close:hover { background: rgba(255,255,255,.28); }
+#help-body { padding: 24px 28px 28px; }
+.help-section { margin-bottom: 24px; }
+.help-section:last-child { margin-bottom: 0; }
+.help-section h3 {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: #023047;
+  border-bottom: 2px solid #E6F3FB; padding-bottom: 6px; margin-bottom: 12px;
+}
+.help-row {
+  display: flex; gap: 12px; margin-bottom: 9px; align-items: flex-start;
+}
+.help-row:last-child { margin-bottom: 0; }
+.help-tag {
+  flex-shrink: 0; font-size: 11px; font-weight: 600;
+  background: #f0f4f8; color: #023047; border: 1px solid #d0dce6;
+  border-radius: 4px; padding: 2px 8px; margin-top: 1px;
+  white-space: nowrap;
+}
+.help-desc { font-size: 12px; color: #444; line-height: 1.6; }
+.help-desc b { color: #023047; }
+.help-note {
+  background: #FFF2EB; border-left: 3px solid #B85C00;
+  border-radius: 0 6px 6px 0; padding: 9px 13px;
+  font-size: 12px; color: #5a2c00; line-height: 1.6; margin-top: 14px;
+}
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 16px; right: 18px; z-index: 999;
+  background: rgba(2,48,71,.9); color: #fff;
+  padding: 7px 14px; border-radius: 7px; font-size: 11px;
+  opacity: 0; pointer-events: none; transition: opacity .3s;
+}
+#toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div>
+    <h1>Org Chart Builder</h1>
+    <p>Org Chart Builder</p>
+  </div>
+  <div id="header-right">
+    <input id="search" type="text" placeholder="Search people…" oninput="onSearch(this.value)">
+    <button class="hbtn" onclick="document.getElementById('workday-upload-hdr').click()">⬆ Load Workday</button>
+    <input type="file" id="workday-upload-hdr" accept=".xlsx,.xls" style="display:none" onchange="loadWorkday(event)">
+    <button class="hbtn" onclick="exportJSON()">⬇ Export JSON</button>
+    <button class="hbtn" onclick="document.getElementById('file-in').click()">⬆ Import JSON</button>
+    <input type="file" id="file-in" accept=".json" style="display:none" onchange="importJSON(event)">
+    <button class="hbtn" onclick="saveState()">💾 Browser Save</button>
+    <button class="hbtn" onclick="loadState()">📂 Browser Load</button>
+    <button class="hbtn" onclick="exportPNG()">🖼 Export PNG</button>
+    <button class="hbtn" onclick="showHelp()">? Help</button>
+    <div class="zoom-control">
+      <button onclick="zoomStep(-10)">−</button>
+      <span id="zoom-val">100%</span>
+      <button onclick="zoomStep(10)">+</button>
+      <button onclick="zoomFit()" title="Fit to screen" style="width:auto;padding:0 6px;font-size:11px;">Fit</button>
+    </div>
+    <div class="spacing-control">
+      <div class="spacing-group">
+        <span class="lbl">V</span>
+        <input type="range" class="spacing-range" id="vspacing-slider" min="20" max="100" value="100" oninput="onVSpacingChange(this.value)">
+        <span id="vspacing-val">100%</span>
+      </div>
+      <div style="width:1px;height:16px;background:rgba(255,255,255,.25)"></div>
+      <div class="spacing-group">
+        <span class="lbl">H</span>
+        <input type="range" class="spacing-range" id="hspacing-slider" min="20" max="100" value="100" oninput="onHSpacingChange(this.value)">
+        <span id="hspacing-val">100%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="legend" class="subbar"></div>
+<div id="search-results" class="subbar"></div>
+
+<div id="welcome-overlay">
+  <div id="welcome-box">
+    <h2>Org Chart Builder</h2>
+    <p>Because PowerPoint's org chart tool is terrible, here's a better Claude-created org chart creator that just requires a Workday report export.</p>
+    <div class="steps">
+      <b>How to export from Workday:</b><br>
+      1. Log in to Workday and click the <b>search bar</b> at the top<br>
+      2. Search for one of these two reports (both work):<br>
+      &nbsp;&nbsp;&nbsp;• <b>My Org Chart</b> — shows your org as a hierarchy<br>
+      &nbsp;&nbsp;&nbsp;• <b>Org Chart</b> — broader org chart report<br>
+      Select the result listed under <b>Reports</b> (not Tasks or People)<br>
+      3. The report loads showing your team. In the top-right corner, click the <b>Excel icon</b> and choose <b>Excel (.xlsx)</b> to download<br>
+      4. Upload that file below
+    </div>
+    <button id="upload-workday-btn" onclick="document.getElementById('workday-file-in').click()">
+      📂 Upload Workday Export
+    </button>
+    <input type="file" id="workday-file-in" accept=".xlsx,.xls" onchange="loadWorkday(event)">
+    <div style="display:flex;align-items:center;gap:12px;margin-top:14px;margin-bottom:14px;">
+      <div style="flex:1;height:1px;background:#e0e0e0;"></div>
+      <span style="font-size:11px;color:#aaa;">or</span>
+      <div style="flex:1;height:1px;background:#e0e0e0;"></div>
+    </div>
+    <button onclick="document.getElementById('welcome-json-in').click()" id="load-json-btn">
+      📁 Load Saved JSON
+    </button>
+    <input type="file" id="welcome-json-in" accept=".json" style="display:none" onchange="loadJSONFromWelcome(event)">
+    <div id="welcome-error"></div>
+    <button onclick="showHelp()" id="welcome-help-btn">? Full Instructions</button>
+
+  </div>
+</div>
+
+<div id="canvas-wrap">
+  <div id="canvas">
+    <svg id="connector-svg"></svg>
+  </div>
+</div>
+
+<div id="ctx-menu"></div>
+
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div id="modal" onclick="event.stopPropagation()">
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+    <div class="mbtns">
+      <button class="btn-p" id="modal-ok">OK</button>
+      <button class="btn-s" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="root-picker-overlay" style="display:none;position:fixed;inset:0;z-index:860;background:rgba(0,0,0,.5);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,.25);font-family:'IBM Plex Sans',sans-serif;">
+    <h2 style="font-size:15px;font-weight:700;color:#023047;margin-bottom:10px;">Who is the top of this org?</h2>
+    <p style="font-size:12px;color:#555;margin-bottom:16px;line-height:1.6;">Multiple people could be the root. Select the person at the top of the org you want to display.</p>
+    <select id="root-picker-select" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #dde;font-size:13px;font-family:inherit;margin-bottom:16px;"></select>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-p" onclick="confirmRootPicker()">Build Chart</button>
+      <button class="btn-s" onclick="hideRootPicker()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="help-overlay" onclick="helpOverlayClick(event)">
+  <div id="help-box">
+    <div id="help-box-header">
+      <h2>Org Chart Builder — Instructions</h2>
+      <button id="help-close" onclick="hideHelp()">✕</button>
+    </div>
+    <div id="help-body">
+
+      <div class="help-section">
+        <h3>Getting Data from Workday</h3>
+        <div class="help-row">
+          <span class="help-tag">Step 1</span>
+          <div class="help-desc">Log in to Workday and click the <b>search bar</b> at the top of the page.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Step 2</span>
+          <div class="help-desc">Search for <b>My Team Employment Data</b> and select the result listed under <b>Reports</b> (not Tasks or People). This is the preferred export — it includes the manager hierarchy the tool needs. If you can't find it, search for <b>My Org Chart</b> instead. Both formats work.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Step 3</span>
+          <div class="help-desc">The report loads showing your team. In the <b>top-right corner of the report</b>, click the <b>Excel icon</b> and choose <b>Excel (.xlsx)</b> to download the file.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Step 4</span>
+          <div class="help-desc">Click <b>⬆ Load Workday</b> in the toolbar (or use the Upload button on the welcome screen). Select the .xlsx file you just downloaded. The chart builds automatically.</div>
+        </div>
+        <div class="help-note">
+          <b>Root person prompt:</b> If the tool asks "Who is the top of this org?" after uploading, select the correct person from the dropdown and click Confirm. This happens when the file contains multiple potential root nodes.
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Navigating the Chart</h3>
+        <div class="help-row">
+          <span class="help-tag">Scroll / Pan</span>
+          <div class="help-desc">Use scrollbars or <b>click and drag</b> on the background to pan around the chart.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Zoom − / +</span>
+          <div class="help-desc">Step zoom in 10% increments (range 20%–150%). Or hold <b>Ctrl</b> (Cmd on Mac) and scroll with the mouse wheel.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Fit</span>
+          <div class="help-desc">Scales the full chart to fit the visible window. Use this before taking a screenshot or exporting.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">V / H Sliders</span>
+          <div class="help-desc">Compress or expand <b>vertical</b> spacing (gap between a manager and their reports) and <b>horizontal</b> spacing (gap between sibling branches) independently. Drag left to compress, right to expand.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Search</span>
+          <div class="help-desc">Type a name or title to find people. Click a result to scroll to and highlight that node on the chart.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Editing the Chart</h3>
+        <div class="help-row">
+          <span class="help-tag">Click a node</span>
+          <div class="help-desc">Opens the context menu. Options: set a color state, toggle layout, collapse/expand children, edit name or title, move to a different manager, or remove the node.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">+ button</span>
+          <div class="help-desc">Appears at the bottom-right of a node on hover. Adds a new direct report under that person — useful for open or budgeted roles not yet in Workday.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">⇆ / ⇅ button</span>
+          <div class="help-desc">Appears at the top-right of a node on hover. Cycles that node's direct reports through three layouts — see Layout Modes below.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">◀ Move Left / Right ▶</span>
+          <div class="help-desc">In the context menu, reorders a person among their siblings — changes their left-to-right position within their manager's team.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Layout Modes</h3>
+        <div class="help-row">
+          <span class="help-tag">Horizontal</span>
+          <div class="help-desc">Direct reports displayed <b>side by side</b>. Best for managers with a small number of direct reports.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">H+Sidebar</span>
+          <div class="help-desc">Sub-team leads go <b>horizontal</b>; individual contributors stack vertically on the right. Best for mixed teams where some reports have their own sub-trees and others don't.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Vertical</span>
+          <div class="help-desc">All direct reports stacked in a <b>column</b>. Best for large teams or when horizontal space is limited.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Color States</h3>
+        <div class="help-row">
+          <span class="help-tag" style="background:#fff;border-color:#023047;color:#023047">Default</span>
+          <div class="help-desc">Standard filled role — white background, navy border. Used for all active employees.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag" style="background:#E6F3FB;border-color:#1A6EA8;color:#0a3d5a">Budgeted / Open</span>
+          <div class="help-desc">A role that is approved or budgeted but not yet filled. Use for open headcount or future positions.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag" style="background:#FFF2EB;border-color:#B85C00;color:#5a2c00">Reporting Change</span>
+          <div class="help-desc">A person or role moving to a different part of the org — useful for illustrating pending restructuring.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag" style="background:#EFEFEF;border-color:#999999;color:#444444">Hold</span>
+          <div class="help-desc">A role or person that is paused — hiring on hold, backfill delayed, or a position under review. Gray background signals it's inactive without removing it from the chart.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Saving Your Work</h3>
+        <div class="help-note" style="margin-bottom:12px;">
+          <b>Important:</b> Any edits you make — colors, layouts, added roles, name corrections — only persist if you explicitly save. Closing the browser tab without saving will lose your changes.
+        </div>
+        <div class="help-row">
+          <span class="help-tag">💾 Browser Save</span>
+          <div class="help-desc">Saves everything (colors, layouts, spacing, zoom) to your browser's local storage. The chart reloads automatically the next time you open this file in the same browser on the same computer. <b>Use this frequently while working.</b></div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">⬇ Export JSON</span>
+          <div class="help-desc">Downloads a .json file with the complete chart state — all people, colors, layouts, and custom additions. Use this to back up your work, transfer to another computer, or share with someone else. <b>At the end of each session, export a JSON as a portable backup.</b></div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">📂 Browser Load</span>
+          <div class="help-desc">Manually restores the most recent browser save. Useful if you've made changes and want to revert to your last save.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">⬆ Import JSON</span>
+          <div class="help-desc">Restores a previously exported JSON file, fully restoring the chart exactly as it was saved — on any computer.</div>
+        </div>
+        <div class="help-note">
+          <b>Sharing with someone else:</b> Send them both the <b>claude-orgchart.html</b> file and your <b>.json export</b>. They open the HTML file, click Import JSON, and select your file. Browser Save is not transferable between computers.
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Exporting for Presentations</h3>
+        <div class="help-row">
+          <span class="help-tag">🖼 Export PNG</span>
+          <div class="help-desc">Renders the full chart as a high-resolution PNG (2× retina quality) with a white background and no UI controls visible. Download and paste directly into PowerPoint or Teams. <b>Requires an internet connection.</b></div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Screenshot tip</span>
+          <div class="help-desc">If Export PNG is unavailable offline, use your OS screenshot tool (Windows: <b>Win+Shift+S</b> / Mac: <b>Cmd+Shift+4</b>). The layout toggle and + buttons are invisible when not hovering, so the capture will be clean. Click <b>Fit</b> first to get the full chart on screen.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────────────────────────────────────
+const NODE_W   = 175;   // node width  (must match CSS)
+const NODE_H   = 64;    // matches fixed CSS height (60px) + 2px border top + 2px border bottom
+const H_GAP_BASE = 24;   // horizontal gap base
+const V_GAP_BASE = 44;   // vertical gap base
+const PAD        = 48;   // canvas padding
+let vSpacingScale = 1.0;  // vertical spacing (controlled by V slider)
+let hSpacingScale = 1.0;  // horizontal spacing (controlled by H slider)
+// Depth-aware gap: level 3+ gets an extra 0.65 compression on top of the slider
+function hGap(depth){ return Math.round(H_GAP_BASE * hSpacingScale * (depth>=2 ? 0.65 : 1)); }
+function vGap(depth){ return Math.round(V_GAP_BASE * vSpacingScale * (depth>=2 ? 0.65 : 1)); }
+const STROKE   = 'rgba(2,48,71,0.38)';
+const STROKE_W = 2;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PALETTE
+// ─────────────────────────────────────────────────────────────────────────────
+const NODE_STATES = {
+  default:   { label:'Default',          bg:'#FFFFFF', border:'#023047', text:'#023047' },
+  open:      { label:'Budgeted / Open',  bg:'#E6F3FB', border:'#1A6EA8', text:'#0a3d5a' },
+  reporting: { label:'Reporting Change', bg:'#FFF2EB', border:'#B85C00', text:'#5a2c00' },
+  hold:      { label:'Hold',             bg:'#EFEFEF', border:'#999999', text:'#444444' },
+  agent:     { label:'AI Agent',         bg:'#E0F5F3', border:'#1a6b63', text:'#0d3b37' },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ORG DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const PEOPLE_DEF = [
+  { id:'greg',      name:'Greg Hart',               title:'VP, SCP',                                managerId:null      },
+  { id:'matt_b',    name:'Mathew Bramson',            title:'Sr. Director, Product Management',       managerId:'greg'    },
+  { id:'ben',       name:'Ben Branham',               title:'Director, UI/UX Engineering',            managerId:'greg'    },
+  { id:'kyle_d',    name:'Kyle Dresbach',             title:'Sr. Director, Product Portfolio Mgmt',   managerId:'greg'    },
+  { id:'cal',       name:'Cal Shorey',                title:'Lead Business Developer',                managerId:'greg'    },
+  { id:'stephi',    name:'Stephi Teat',               title:'Lead Business Developer',                managerId:'greg'    },
+  { id:'jill',      name:'Jill Schumacher',           title:'Executive Assistant I',                  managerId:'greg'    },
+  { id:'sandhya',   name:'Sandhya Bhaskar',           title:'Sr. Director, Enabling Capabilities',    managerId:'greg'    },
+  { id:'kyle_t',    name:'Kyle Thomas',               title:'Sr. Product Manager',                    managerId:'sandhya' },
+  { id:'taylor',    name:'Taylor Putnam-Majarian',    title:'Sr. Product Manager',                    managerId:'sandhya' },
+  { id:'matt_p',    name:'Matthew Petzelt',           title:'Sr. Associate Product Manager',          managerId:'sandhya' },
+  { id:'apm_scp',   name:'Open – Associate PM',          title:'Associate Product Manager (P2)',          managerId:'sandhya' },
+  { id:'m3_open',   name:'M3 Open',                   title:'Sr. Manager, Product Management',        managerId:'matt_b'  },
+  { id:'andrea',    name:'Andrea Stephenson',         title:'Sr. Manager, Product Management',        managerId:'matt_b'  },
+  { id:'cameron',   name:'Cameron Barr',              title:'Sr. Product Manager',                    managerId:'matt_b'  },
+  { id:'emily_k',   name:'Emily Kaiser',              title:'Product Manager',                        managerId:'m3_open'  },
+  { id:'luke',      name:'Luke Vouis',                title:'Product Manager',                        managerId:'matt_b'  },
+  { id:'sean_j',    name:'Sean Johnson',              title:'Product Manager',                        managerId:'m3_open'  },
+  { id:'lacey',     name:'Lacey Short',               title:'Sr. Associate Product Manager',          managerId:'m3_open'  },
+  { id:'marissa',   name:'Marissa Malen',             title:'Lead Product Manager',                   managerId:'m3_open'  },
+  { id:'joshua_p',  name:'Joshua Pratt',              title:'Product Manager',                        managerId:'andrea'  },
+  { id:'meghan',    name:'Meghan Gabaly',             title:'Sr. Associate Product Manager',          managerId:'andrea'  },
+  { id:'laura',     name:'Laura Weeks',               title:'Sr. Associate Product Manager',          managerId:'andrea'  },
+  { id:'maisha',    name:'Maisha Talukder',           title:'Product Manager',                        managerId:'andrea'  },
+  { id:'jenna',     name:'Jenna Sumner Bedingfield',  title:'Product Owner',                          managerId:'andrea'  },
+  { id:'pm_portal', name:'Open – Single Portal PM',     title:'Product Manager (P4)',                    managerId:'andrea'  },
+  { id:'kristen',   name:'Kristen Hazen',             title:'Sr. Manager, UX',                        managerId:'ben'     },
+  { id:'wesley',    name:'Wesley Smith',              title:'Sr. Manager, UX',                        managerId:'ben'     },
+  { id:'jackie',    name:'Jacquelyn Hartley',         title:'UX Strategist',                          managerId:'ben'     },
+  { id:'mildred',   name:'Mildred van den Boom',      title:'UX Researcher',                          managerId:'kristen' },
+  { id:'sarah_m',   name:'Sarah Manthey',             title:'UX Researcher',                          managerId:'kristen' },
+  { id:'michelle_l',name:'Michelle Ludwin',           title:'Sr. UX Researcher',                      managerId:'kristen' },
+  { id:'kristin_f', name:'Kristin Fick',              title:'Sr. UX Designer',                        managerId:'kristen' },
+  { id:'jensen',    name:'Jensen Laatsch',            title:'Sr. UX Designer',                        managerId:'kristen' },
+  { id:'dan_g',     name:'Dan Gualtieri',             title:'Sr. UX Designer',                        managerId:'kristen' },
+  { id:'bre',       name:'Bre Jacobs',                title:'UX Researcher',                          managerId:'kristen' },
+  { id:'sean_m',    name:'Sean Moyer',                title:'UX Designer',                            managerId:'wesley'  },
+  { id:'isabel',    name:'Isabel Andrews',            title:'UX Designer',                            managerId:'wesley'  },
+  { id:'matt_s',    name:'Matthew Skarsten',          title:'UX Designer',                            managerId:'wesley'  },
+  { id:'meg_f',     name:'Meg Ferillo',               title:'Sr. UX Researcher',                      managerId:'wesley'  },
+  { id:'jeanne',    name:'Jeanne Lyons',              title:'UX Researcher',                          managerId:'wesley'  },
+  { id:'alex_g',    name:'Alex Girvin',               title:'Sr. UX Designer',                        managerId:'wesley'  },
+  { id:'giselle',   name:'Giselle Belkin',            title:'Director, Product Portfolio Management', managerId:'kyle_d'  },
+  { id:'carly',     name:'Carly Fuerst',              title:'Product Portfolio Manager',              managerId:'kyle_d'  },
+  { id:'michael_c', name:'Michael Czyz',              title:'Sr. Product Portfolio Manager',          managerId:'kyle_d'  },
+  { id:'katie_r',   name:'Katie Russell',             title:'Mgr, Interoperability & Standards',      managerId:'kyle_d'  },
+  { id:'matt_h',    name:'Matthew Hamski',            title:'Sr. Product Portfolio Manager',          managerId:'giselle' },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUNTIME STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let people={}, children={}, nodeState={}, nodeLayout={}, collapsed={};
+let openMenuId=null;
+let rootId='greg'; // dynamic — updated when Workday file is loaded
+// Default: root node lays out its children horizontally (level 1 = horizontal bus),
+// every deeper node lays out its children vertically.
+function nodeDepth(id){
+  let d=0, cur=id, seen=new Set();
+  while(people[cur]&&people[cur].managerId&&!seen.has(cur)){
+    seen.add(cur); cur=people[cur].managerId; d++;
+  }
+  return d;
+}
+function getLayout(id){
+  if(nodeLayout.hasOwnProperty(id)) return nodeLayout[id];
+  return nodeDepth(id)===0 ? 'h' : 'v';
+}
+
+function initData(){
+  rootId='__empty__';
+  people={}; children={};
+  // No default org — tool starts blank, user loads via Workday or JSON
+  // Default state for open roles
+
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LAYOUT ENGINE  — computes {x, y, subtreeW, subtreeH} for each node
+// All coordinates are relative to the subtree's own top-left origin.
+// After computing, we translate to absolute canvas coordinates.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Returns { x, y, w, h, subtreeW, subtreeH, children:[...same] }
+// x,y = top-left of the NODE BOX within the subtree's bounding box
+function computeLayout(id, nodeH, depth=0){
+  const kids = visibleKids(id);
+  const lout = getLayout(id);
+
+  if(kids.length===0 || collapsed[id]){
+    return { id, x:0, y:0, w:NODE_W, h:nodeH, subtreeW:NODE_W, subtreeH:nodeH, kids:[] };
+  }
+
+  const kidLayouts = kids.map(k=>computeLayout(k, nodeH, depth+1));
+
+  if(lout==='h'){
+    // Children spread HORIZONTALLY below this node
+    // Each child subtree sits side by side with H_GAP between
+    const hg=hGap(depth), vg=vGap(depth);
+    let totalKidsW = kidLayouts.reduce((s,k)=>s+k.subtreeW,0) + hg*(kids.length-1);
+    let maxKidsH   = Math.max(...kidLayouts.map(k=>k.subtreeH));
+
+    // Centre the node over the children row
+    const nodeX = Math.max(0, (totalKidsW - NODE_W)/2);
+    const subtreeW = Math.max(NODE_W, totalKidsW);
+    const subtreeH = nodeH + vg + maxKidsH;
+
+    // Position each child subtree
+    let cursor = (subtreeW - totalKidsW)/2; // centre children under node
+    kidLayouts.forEach(kl=>{
+      kl._offsetX = cursor;
+      kl._offsetY = nodeH + vg;
+      cursor += kl.subtreeW + hg;
+    });
+
+    return { id, x:nodeX, y:0, w:NODE_W, h:nodeH, subtreeW, subtreeH, kids:kidLayouts };
+
+  } else if(lout==='hs'){
+    // ── H+Sidebar: bus children (have sub-reports) spread horizontally,
+    //              leaf children stack vertically in a sidebar on the right.
+    //              Parent centres over the full combined width.
+    const hg=hGap(depth), vg=vGap(depth);
+
+    const busKids  = kidLayouts.filter(kl => visibleKids(kl.id).length > 0);
+    const sideKids = kidLayouts.filter(kl => visibleKids(kl.id).length === 0);
+
+    // Bus section width
+    const busKidsW = busKids.reduce((s,k)=>s+k.subtreeW,0);
+    const busW = busKidsW + hg*(Math.max(busKids.length-1,0));
+    const busH = busKids.length ? Math.max(...busKids.map(k=>k.subtreeH)) : 0;
+
+    // Sidebar section width/height
+    const sideW = sideKids.length ? Math.max(...sideKids.map(k=>k.subtreeW)) : 0;
+    const vgs   = vGap(depth+1);
+    const sideH = sideKids.reduce((s,k)=>s+k.subtreeH,0) + vgs*(Math.max(sideKids.length-1,0));
+
+    const gapBetween = (sideKids.length && busKids.length) ? Math.max(hg, 40) : 0;
+    const totalW  = busW + gapBetween + sideW;
+    const subtreeW = Math.max(NODE_W, totalW);
+    const subtreeH = nodeH + vg + Math.max(busH, sideH);
+
+    // Centre parent node over the FULL width
+    const nodeX = Math.max(0, (subtreeW - NODE_W) / 2);
+
+    // Position bus kids left-aligned, starting at x=0
+    let cursor = 0;
+    busKids.forEach(kl=>{
+      kl._offsetX = cursor;
+      kl._offsetY = nodeH + vg;
+      kl._isBus   = true;
+      cursor += kl.subtreeW + hg;
+    });
+
+    // Position sidebar kids flush right
+    const sideStartX = busW + gapBetween;
+    let sCursor = nodeH + vg;
+    sideKids.forEach(kl=>{
+      kl._offsetX = sideStartX;
+      kl._offsetY = sCursor;
+      kl._isSide  = true;
+      sCursor += kl.subtreeH + vgs;
+    });
+
+    return { id, x:nodeX, y:0, w:NODE_W, h:nodeH, subtreeW, subtreeH, kids:kidLayouts, lout:'hs', busW, sideStartX };
+
+  } else if(lout==='v2'){
+    // TWO-COLUMN VERTICAL: split children into left and right columns
+    const INDENT = 30;
+    const hg = hGap(depth);
+    const vgv = vGap(depth);
+    const gapBetween = kl => (children[kl.id]||[]).length === 0 ? Math.round(vgv * 0.45) : vgv;
+
+    const half = Math.ceil(kidLayouts.length / 2);
+    const leftKids  = kidLayouts.slice(0, half);
+    const rightKids = kidLayouts.slice(half);
+
+    // Height of each column
+    function colHeight(kls){
+      if(!kls.length) return 0;
+      return kls.reduce((s,k)=>s+k.subtreeH,0)
+        + kls.slice(0,-1).reduce((s,kl)=>s+gapBetween(kl),0);
+    }
+    const leftH  = colHeight(leftKids);
+    const rightH = colHeight(rightKids);
+    const leftW  = leftKids.length  ? Math.max(...leftKids.map(k=>k.subtreeW))  : 0;
+    const rightW = rightKids.length ? Math.max(...rightKids.map(k=>k.subtreeW)) : 0;
+
+    const totalW  = INDENT + leftW + hg + rightW;
+    const totalH  = Math.max(leftH, rightH);
+    const subtreeW = Math.max(NODE_W, totalW);
+    const subtreeH = nodeH + vgv + totalH;
+
+    // Position left column
+    let cur = nodeH + vgv;
+    leftKids.forEach((kl, i)=>{
+      kl._offsetX = INDENT;
+      kl._offsetY = cur;
+      kl._col = 'left';
+      cur += kl.subtreeH + (i < leftKids.length-1 ? gapBetween(kl) : 0);
+    });
+
+    // Position right column
+    cur = nodeH + vgv;
+    rightKids.forEach((kl, i)=>{
+      kl._offsetX = INDENT + leftW + hg;
+      kl._offsetY = cur;
+      kl._col = 'right';
+      cur += kl.subtreeH + (i < rightKids.length-1 ? gapBetween(kl) : 0);
+    });
+
+    return { id, x:0, y:0, w:NODE_W, h:nodeH, subtreeW, subtreeH, kids:kidLayouts, lout:'v2', leftW, rightW, INDENT, hg };
+
+  } else if(lout==='h2'){
+    // TWO-ROW HORIZONTAL: split children into two rows
+    const hg = hGap(depth);
+    const vg = vGap(depth);
+    const rowGap = Math.round(vg * 0.7); // gap between the two rows
+
+    const half = Math.ceil(kidLayouts.length / 2);
+    const row1 = kidLayouts.slice(0, half);
+    const row2 = kidLayouts.slice(half);
+
+    function rowWidth(kls){
+      return kls.reduce((s,k)=>s+k.subtreeW,0) + hg*(Math.max(kls.length-1,0));
+    }
+    const row1W = rowWidth(row1);
+    const row2W = rowWidth(row2);
+    const row1H = row1.length ? Math.max(...row1.map(k=>k.subtreeH)) : 0;
+    const row2H = row2.length ? Math.max(...row2.map(k=>k.subtreeH)) : 0;
+
+    const totalW  = Math.max(row1W, row2W);
+    const subtreeW = Math.max(NODE_W, totalW);
+    const subtreeH = nodeH + vg + row1H + rowGap + row2H;
+    const nodeX = Math.max(0, (subtreeW - NODE_W) / 2);
+
+    // Row 1 — left-aligned
+    let cur = (subtreeW - row1W) / 2;
+    row1.forEach(kl=>{
+      kl._offsetX = cur;
+      kl._offsetY = nodeH + vg;
+      kl._row = 1;
+      cur += kl.subtreeW + hg;
+    });
+
+    // Row 2
+    cur = (subtreeW - row2W) / 2;
+    row2.forEach(kl=>{
+      kl._offsetX = cur;
+      kl._offsetY = nodeH + vg + row1H + rowGap;
+      kl._row = 2;
+      cur += kl.subtreeW + hg;
+    });
+
+    return { id, x:nodeX, y:0, w:NODE_W, h:nodeH, subtreeW, subtreeH, kids:kidLayouts, lout:'h2', row1H, rowGap, vg };
+
+  } else {
+    // Children stacked VERTICALLY, aligned left, indented
+    const INDENT = 30; // left indent for vertical children column
+    let maxKidW = Math.max(...kidLayouts.map(k=>k.subtreeW));
+    // Use a tighter gap between leaf siblings (no children) vs those with sub-teams
+    const vgv = vGap(depth);
+    const gapBetween = kl => (children[kl.id]||[]).length === 0 ? Math.round(vgv * 0.45) : vgv;
+    let totalKidsH = kidLayouts.reduce((s,k)=>s+k.subtreeH,0)
+      + kidLayouts.slice(0,-1).reduce((s,kl)=>s+gapBetween(kl),0);
+
+    const subtreeW = INDENT + maxKidW;
+    const subtreeH = nodeH + vgv + totalKidsH;
+
+    let cursor = nodeH + vgv;
+    kidLayouts.forEach((kl, i)=>{
+      kl._offsetX = INDENT;
+      kl._offsetY = cursor;
+      cursor += kl.subtreeH + (i < kidLayouts.length-1 ? gapBetween(kl) : 0);
+    });
+
+    return { id, x:0, y:0, w:NODE_W, h:nodeH, subtreeW:Math.max(NODE_W, subtreeW), subtreeH, kids:kidLayouts };
+  }
+}
+
+function visibleKids(id){
+  return (children[id]||[]).filter(k=>people[k]);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER  — place nodes + draw SVG connectors from layout tree
+// ─────────────────────────────────────────────────────────────────────────────
+let nodeHeights = {}; // id → measured height after first render
+
+function render(){
+  // Guard: if rootId isn't in people, show welcome instead of crashing
+  if(!people[rootId]){
+    showWelcome();
+    return;
+  }
+
+  const canvas = document.getElementById('canvas');
+
+  // Pass 1: render nodes with estimated height to measure them
+  const estimatedH = 52;
+  const layout = computeLayout(rootId, estimatedH);
+
+  canvas.innerHTML = '';
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.id='connector-svg';
+  svg.style.cssText='position:absolute;top:0;left:0;pointer-events:none;';
+  canvas.appendChild(svg);
+
+  placeNodes(canvas, layout, PAD, PAD);
+
+  // Size canvas
+  canvas.style.width  = (layout.subtreeW + PAD*2)+'px';
+  canvas.style.height = (layout.subtreeH + PAD*2)+'px';
+
+  // Pass 2: measure actual node heights, recompute layout, reposition
+  requestAnimationFrame(()=>{
+    // Measure heights
+    Object.keys(people).forEach(id=>{
+      const el=document.getElementById('node-'+id);
+      if(el) nodeHeights[id]=el.offsetHeight;
+    });
+
+    // Recompute with real heights — use average or per-node
+    // For simplicity use the most common height
+    // Use fixed NODE_H constant — CSS enforces fixed height so measuring
+    // individual nodes produces noise from text overflow, not real size variation
+    const layout2 = computeLayout(rootId, NODE_H);
+    canvas.innerHTML='';
+
+    const svg2 = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg2.id='connector-svg';
+    svg2.style.cssText='position:absolute;top:0;left:0;pointer-events:none;';
+    canvas.appendChild(svg2);
+
+    placeNodes(canvas, layout2, PAD, PAD);
+    fitNodeText();
+
+    canvas.style.width  = (layout2.subtreeW + PAD*2)+'px';
+    canvas.style.height = (layout2.subtreeH + PAD*2)+'px';
+    svg2.setAttribute('width',  layout2.subtreeW + PAD*2);
+    svg2.setAttribute('height', layout2.subtreeH + PAD*2);
+
+    drawConnectors(svg2, layout2, PAD, PAD, NODE_H);
+
+    renderLegend();
+    layoutBars();
+  });
+}
+
+function placeNodes(canvas, layout, ox, oy){
+  const id    = layout.id;
+  const p     = people[id];
+  if(!p) return; // guard against stale layout referencing deleted node
+  const state = nodeState[id]||'default';
+  const col   = NODE_STATES[state];
+  const kids  = visibleKids(id);
+  const lout  = getLayout(id);
+
+  const el = document.createElement('div');
+  el.className = 'node';
+  el.id = 'node-'+id;
+  el.style.cssText = `left:${ox+layout.x}px;top:${oy+layout.y}px;background:${col.bg};border-color:${col.border};color:${col.text};`;
+
+  const nm = document.createElement('div'); nm.className='node-name'; nm.textContent=(state==='agent'?'⬡ ':'')+p.name; el.appendChild(nm);
+  const ti = document.createElement('div'); ti.className='node-title'; ti.textContent=p.title; el.appendChild(ti);
+
+  if(kids.length>0){
+    const lb=document.createElement('button'); lb.className='layout-btn';
+    const _lbIcons = {h:'⇆', hs:'⇅s', v:'⇅', v2:'⇅2', h2:'⇆2'};
+    const _lbTitles = {h:'Horizontal', hs:'H+Sidebar', v:'Vertical', v2:'2-Column Vertical', h2:'2-Row Horizontal'};
+    lb.textContent = _lbIcons[lout] || '⇅';
+    lb.title = _lbTitles[lout] || lout;
+    lb.style.color=col.text;
+    lb.onclick=e=>{e.stopPropagation();toggleLayout(id);};
+    el.appendChild(lb);
+  }
+  el.onclick=e=>{e.stopPropagation();showMenu(id,el);};
+  canvas.appendChild(el);
+
+  layout.kids.forEach(kl=>{
+    placeNodes(canvas, kl, ox+layout.x+kl._offsetX-layout.x, oy+layout.y+kl._offsetY);
+  });
+}
+
+// Connector drawing — walk layout tree, draw lines
+function drawConnectors(svg, layout, ox, oy, nodeH){
+  const id   = layout.id;
+  const lout = getLayout(id);
+
+  const nx = ox + layout.x;
+  const ny = oy + layout.y;
+  const nh = nodeHeights[id] || nodeH;
+
+  if(lout === 'h' || lout === 'hs'){
+    // ── Horizontal: bus bar + elbow to each child top-centre ──
+    layout.kids.forEach(kl=>{
+      // Skip sidebar kids in hs mode — they're handled in the spine block below
+      if(lout==='hs' && kl._isSide) return;
+      const kox = ox + layout.x + kl._offsetX - layout.x;
+      const koy = oy + layout.y + kl._offsetY;
+      const kx  = kox + kl.x;
+      const ky  = koy + kl.y;
+      const cx  = kx + NODE_W/2;
+      const midY = (ny + nh) + vGap(0)/2;
+      if(lout !== 'hs') svgLine(svg, cx, midY, cx, ky);  // drop for pure-h (hs drops handled in spine block)
+      drawConnectors(svg, kl, kox, koy, nodeH);
+    });
+    // Shared horizontal bar + stem from parent
+    if(layout.kids.length > 0){
+      const py   = ny + nh;
+      const vg   = vGap(0);
+      const midY = py + vg/2;
+
+      // Stem drops from parent centre bottom to midY
+      svgLine(svg, nx + NODE_W/2, py, nx + NODE_W/2, midY);
+
+      if(lout === 'hs'){
+        // ── hs mode: bus bar spans bus kids only; sidebar gets L-spine from midY ──
+        const busOnly  = layout.kids.filter(k=>k._isBus);
+        const sideOnly = layout.kids.filter(k=>k._isSide);
+
+        // Bus horizontal bar (first bus kid centre → last bus kid centre)
+        if(busOnly.length > 0){
+          const fkl = busOnly[0];
+          const lkl = busOnly[busOnly.length-1];
+          const fox  = ox + layout.x + fkl._offsetX - layout.x;
+          const lox2 = ox + layout.x + lkl._offsetX - layout.x;
+          const fx   = fox  + fkl.x + NODE_W/2;
+          const lx   = lox2 + lkl.x + NODE_W/2;
+          // Extend bar from leftmost bus kid to the sidebar spine x
+          let barRight = lx;
+
+          // Sidebar spine x: use the layout's sideStartX which is the exact
+          // start of the sidebar column. The spine sits halfway into the hGap
+          // between bus section end and sidebar start — guaranteed clear of both.
+          let spineX = null;
+          if(sideOnly.length > 0 && layout.sideStartX !== undefined){
+            // layout.sideStartX is relative to the subtree origin (ox - layout.x offset already in ox)
+            const sideColAbsX = ox + layout.sideStartX; // absolute x of sidebar column left edge
+            // Bus section ends at ox + layout.busW
+            const busEndAbsX  = ox + (layout.busW || 0);
+            const gap = sideColAbsX - busEndAbsX;
+            spineX   = busEndAbsX + Math.round(gap / 2); // dead centre of the gap
+            barRight  = spineX;
+          } else if(sideOnly.length > 0){
+            // Fallback: use first sidebar node position
+            const firstSide = sideOnly[0];
+            const firstSideAbsX = ox + firstSide._offsetX + firstSide.x;
+            spineX   = firstSideAbsX - 20;
+            barRight  = spineX;
+          }
+
+          // Draw horizontal bar: from leftmost point (parent stem or first bus child) to spineX
+          svgLine(svg, Math.min(fx, nx+NODE_W/2), midY, barRight, midY);
+
+          // Drop lines from midY to each bus child top-centre
+          busOnly.forEach(kl=>{
+            const kox2 = ox + layout.x + kl._offsetX - layout.x;
+            const koy2 = oy + layout.y + kl._offsetY;
+            const kx2  = kox2 + kl.x;
+            const ky2  = koy2 + kl.y;
+            svgLine(svg, kx2 + NODE_W/2, midY, kx2 + NODE_W/2, ky2);
+          });
+
+          // Sidebar: spine drops from midY straight down to last sidebar child mid,
+          //          then L-arms branch right into each child's left edge — same
+          //          pattern as vertical layout Option A.
+          if(spineX !== null && sideOnly.length > 0){
+            const lastSide = sideOnly[sideOnly.length-1];
+            const lSky = oy + layout.y + lastSide._offsetY + lastSide.y;
+            const lSkh = nodeHeights[lastSide.id] || nodeH;
+            const spineBot = lSky + lSkh/2;
+
+            svgLine(svg, spineX, midY, spineX, spineBot); // continuous spine top→bottom
+
+            sideOnly.forEach(kl=>{
+              const kox2 = ox + layout.x + kl._offsetX - layout.x;
+              const koy2 = oy + layout.y + kl._offsetY;
+              const kx2  = kox2 + kl.x;   // left edge of child box
+              const ky2  = koy2 + kl.y;
+              const kh2  = nodeHeights[kl.id] || nodeH;
+              const armY = ky2 + kh2/2;         // vertical mid of child
+              svgLine(svg, spineX, armY, kx2, armY); // horizontal L-arm into left edge
+              drawConnectors(svg, kl, kox2, koy2, nodeH);
+            });
+          }
+        }
+
+      } else {
+        // ── Pure horizontal: bus bar across all children ──
+        if(layout.kids.length > 1){
+          const fkl = layout.kids[0];
+          const lkl = layout.kids[layout.kids.length-1];
+          const fox  = ox+layout.x+fkl._offsetX-layout.x;
+          const lox2 = ox+layout.x+lkl._offsetX-layout.x;
+          const fx   = fox  + fkl.x + NODE_W/2;
+          const lx   = lox2 + lkl.x + NODE_W/2;
+          svgLine(svg, fx, midY, lx, midY);
+        }
+      }
+    }
+
+  } else if(lout === 'v2'){
+    // ── Two-column vertical: parent → horizontal bar → two spines with L-arms ──
+    const SPINE_INSET = 16;
+    const leftKids  = layout.kids.filter(k=>k._col==='left');
+    const rightKids = layout.kids.filter(k=>k._col==='right');
+
+    if(layout.kids.length > 0){
+      const py   = ny + nh;
+      const vg   = vGap(nodeDepth(layout.id));
+      const midY = py + vg / 2;
+
+      // Stem from parent bottom to midY
+      svgLine(svg, nx + NODE_W/2, py, nx + NODE_W/2, midY);
+
+      // Helper: draw one column's spine + L-arms, spine starts at midY
+      function drawV2Spine(colKids){
+        if(!colKids.length) return;
+        const firstKl = colKids[0];
+        const lastKl  = colKids[colKids.length - 1];
+
+        // Absolute x of the first node's left edge
+        const firstAbsX = ox + firstKl._offsetX + firstKl.x;
+        const spineX    = firstAbsX + SPINE_INSET;
+
+        // Spine runs from midY down to the mid-height of the last child
+        const lastAbsY  = oy + lastKl._offsetY + lastKl.y;
+        const spineBot  = lastAbsY + nodeH / 2;
+        svgLine(svg, spineX, midY, spineX, spineBot);
+
+        // L-arm from spine into each child's left edge at child mid-height
+        colKids.forEach(kl => {
+          const kAbsX = ox + kl._offsetX + kl.x;
+          const kAbsY = oy + kl._offsetY + kl.y;
+          const armY  = kAbsY + nodeH / 2;
+          svgLine(svg, spineX, armY, kAbsX, armY);
+          drawConnectors(svg, kl, ox + kl._offsetX, oy + kl._offsetY, nodeH);
+        });
+      }
+
+      // Horizontal bar connecting both spine tops at midY
+      const lFirst = leftKids[0], rFirst = rightKids.length ? rightKids[0] : null;
+      if(lFirst && rFirst){
+        const lSpineX = ox + lFirst._offsetX + lFirst.x + SPINE_INSET;
+        const rSpineX = ox + rFirst._offsetX + rFirst.x + SPINE_INSET;
+        svgLine(svg, lSpineX, midY, rSpineX, midY);
+      }
+
+      drawV2Spine(leftKids);
+      drawV2Spine(rightKids);
+    }
+
+  } else if(lout === 'h2'){
+    // ── Two-row horizontal: two bus bars stacked ──
+    if(layout.kids.length > 0){
+      const py    = ny + nh;
+      const vg    = layout.vg || vGap(0);
+      const midY  = py + vg/2;
+      svgLine(svg, nx + NODE_W/2, py, nx + NODE_W/2, midY);
+
+      const row1Kids = layout.kids.filter(k=>k._row===1);
+      const row2Kids = layout.kids.filter(k=>k._row===2);
+      const rowGap   = layout.rowGap || Math.round(vg * 0.7);
+      const row1H    = layout.row1H  || 0;
+
+      function drawRow(rowKids, rowMidY){
+        if(!rowKids.length) return;
+        const f = rowKids[0], l = rowKids[rowKids.length-1];
+        const fox = ox + layout.x + f._offsetX - layout.x;
+        const lox = ox + layout.x + l._offsetX - layout.x;
+        const fx  = fox + f.x + NODE_W/2;
+        const lx  = lox + l.x + NODE_W/2;
+        // horizontal bar for this row
+        if(rowKids.length > 1) svgLine(svg, fx, rowMidY, lx, rowMidY);
+        rowKids.forEach(kl=>{
+          const kox = ox + layout.x + kl._offsetX - layout.x;
+          const koy = oy + layout.y + kl._offsetY;
+          svgLine(svg, kox + kl.x + NODE_W/2, rowMidY, kox + kl.x + NODE_W/2, koy + kl.y);
+          drawConnectors(svg, kl, kox, koy, nodeH);
+        });
+        // vertical stem connecting midY to this rowMidY
+        if(rowMidY !== midY) svgLine(svg, nx + NODE_W/2, midY, nx + NODE_W/2, rowMidY);
+      }
+
+      // Row 1 midY: same as midY (just below parent)
+      const row1MidY = midY;
+      // Row 2 midY: halfway between row1 bottom and row2 tops
+      const row2MidY = py + vg + row1H + rowGap/2;
+
+      // Draw vertical line connecting the two row midpoints
+      svgLine(svg, nx + NODE_W/2, row1MidY, nx + NODE_W/2, row2MidY);
+
+      drawRow(row1Kids, row1MidY);
+      drawRow(row2Kids, row2MidY);
+    }
+
+  } else {
+    // ── Vertical: Option A — single left-side spine + L-arms ──
+    const SPINE_INSET = 16;  // distance from parent left edge to the spine rail
+    const spineX = nx + SPINE_INSET;
+
+    if(layout.kids.length > 0){
+      // Draw the continuous spine from parent bottom down to the last child's arm y
+      const firstKl = layout.kids[0];
+      const lastKl  = layout.kids[layout.kids.length - 1];
+
+      const firstKoy = oy + layout.y + firstKl._offsetY;
+      const lastKoy  = oy + layout.y + lastKl._offsetY;
+      const lastKh   = nodeHeights[lastKl.id] || nodeH;
+      const spineTop = ny + nh;                        // bottom of parent box
+      const spineBot = lastKoy + lastKl.y + lastKh/2;  // mid of last child
+
+      svgLine(svg, spineX, spineTop, spineX, spineBot); // one continuous spine
+
+      // Horizontal arm from spine to each child's left edge, at child mid-height
+      layout.kids.forEach(kl=>{
+        const kox  = ox + layout.x + kl._offsetX - layout.x;
+        const koy  = oy + layout.y + kl._offsetY;
+        const kx   = kox + kl.x;
+        const ky   = koy + kl.y;
+        const kh   = nodeHeights[kl.id] || nodeH;
+        const armY = ky + kh/2;
+        const armX = kx;            // left edge of child box
+
+        svgLine(svg, spineX, armY, armX, armY); // horizontal arm
+
+        drawConnectors(svg, kl, kox, koy, nodeH);
+      });
+    }
+  }
+}
+
+function svgLine(svg,x1,y1,x2,y2){
+  const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+  l.setAttribute('x1',Math.round(x1)); l.setAttribute('y1',Math.round(y1));
+  l.setAttribute('x2',Math.round(x2)); l.setAttribute('y2',Math.round(y2));
+  l.setAttribute('stroke',STROKE); l.setAttribute('stroke-width',STROKE_W);
+  l.setAttribute('stroke-linecap','square');
+  svg.appendChild(l);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTEXT MENU
+// ─────────────────────────────────────────────────────────────────────────────
+function showMenu(id, nodeEl){
+  if(openMenuId===id){closeMenu();return;}
+  openMenuId=id;
+  const menu  = document.getElementById('ctx-menu');
+  const kids  = visibleKids(id);
+  const lout  = getLayout(id);
+  const cur   = nodeState[id]||'default';
+  const isCol = collapsed[id];
+
+  let h=`<div class="ctx-sec">Set State</div>`;
+  Object.entries(NODE_STATES).forEach(([k,v])=>{
+    h+=`<div class="ctx-item" style="${cur===k?'background:#f0f4ff':''}" onclick="setState('${id}','${k}')">
+      <span class="ctx-swatch" style="background:${v.bg};border-color:${v.border}"></span>${v.label}</div>`;
+  });
+  h+=`<div class="ctx-hr"></div>`;
+  if(kids.length>0){
+    h+=`<div class="ctx-sec" style="margin-top:4px">Layout</div>`;
+    const _layouts = [
+      {k:'h',  label:'⇆ Horizontal'},
+      {k:'h2', label:'⇆2 Two-Row Horizontal'},
+      {k:'hs', label:'⇅s H + Sidebar'},
+      {k:'v',  label:'⇅ Vertical'},
+      {k:'v2', label:'⇅2 Two-Column Vertical'},
+    ];
+    _layouts.forEach(({k, label}) => {
+      const active = lout===k ? 'background:#f0f4ff;font-weight:600;' : '';
+      h+=`<div class="ctx-act" style="${active}" onclick="setLayout('${id}','${k}')">${label}</div>`;
+    });
+    h+=`<div class="ctx-act" onclick="toggleCollapse('${id}')">${isCol?'▶ Expand':'▼ Collapse'} Children</div>`;
+  }
+  // Reorder siblings
+  if(id!==rootId){
+    const mgr=people[id].managerId;
+    const sibs=mgr?children[mgr]:[];
+    const pos=sibs.indexOf(id);
+    const canLeft  = pos>0;
+    const canRight = pos<sibs.length-1;
+    if(canLeft||canRight){
+      h+=`<div class="ctx-hr"></div>`;
+      h+=`<div class="ctx-sec">Reorder Among Siblings</div>`;
+      h+=`<div style="display:flex;gap:0;">
+        <div class="ctx-act" style="flex:1;justify-content:center;opacity:${canLeft?1:.3};pointer-events:${canLeft?'auto':'none'}" onclick="moveSibling('${id}',-1)">◀ Move Left</div>
+        <div class="ctx-act" style="flex:1;justify-content:center;opacity:${canRight?1:.3};pointer-events:${canRight?'auto':'none'}" onclick="moveSibling('${id}',1)">Move Right ▶</div>
+      </div>`;
+    }
+  }
+  h+=`<div class="ctx-hr"></div>`;
+  h+=`<div class="ctx-act" onclick="openEditModal('${id}')">✏️ Edit Name / Title</div>`;
+  if(id!==rootId) h+=`<div class="ctx-act" onclick="openMoveModal('${id}')">🔀 Move to Different Manager</div>`;
+  h+=`<div class="ctx-act" onclick="openAddModal('${id}')">➕ Add Direct Report</div>`;
+  h+=`<div class="ctx-act" onclick="openAddAgentModal('${id}')">🤖 Add AI Agent</div>`;
+  if(id!==rootId) h+=`<div class="ctx-act danger" onclick="removeNode('${id}')">🗑 Remove (incl. all reports)</div>`;
+
+  menu.innerHTML=h;
+  menu.classList.add('open');
+  const nr=nodeEl.getBoundingClientRect();
+  menu.style.top  = Math.min(nr.bottom+4, window.innerHeight-340)+'px';
+  menu.style.left = Math.max(4, Math.min(nr.left, window.innerWidth-220))+'px';
+}
+
+function moveSibling(id, dir){
+  const mgr = people[id] && people[id].managerId;
+  if(!mgr) return;
+  const sibs = children[mgr];
+  const i = sibs.indexOf(id);
+  const j = i + dir;
+  if(j < 0 || j >= sibs.length) return;
+  // Swap
+  [sibs[i], sibs[j]] = [sibs[j], sibs[i]];
+  closeMenu();
+  render();
+}
+
+function closeMenu(){
+  openMenuId=null;
+  const m=document.getElementById('ctx-menu');
+  m.classList.remove('open'); m.innerHTML='';
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#ctx-menu')&&!e.target.closest('.node')) closeMenu();
+});
+
+function setState(id,k)     { nodeState[id]=k; closeMenu(); render(); }
+function toggleLayout(id){
+  const cur = getLayout(id);
+  const kids = visibleKids(id);
+  const hasDeep = kids.some(k => visibleKids(k).length > 0);
+  // Cycle: h → h2 → hs (if deep) → v → v2 → h
+  const cycle = hasDeep ? ['h','h2','hs','v','v2'] : ['h','h2','v','v2'];
+  const idx = cycle.indexOf(cur);
+  nodeLayout[id] = cycle[(idx + 1) % cycle.length];
+  closeMenu(); render();
+}
+function setLayout(id, mode){ nodeLayout[id]=mode; closeMenu(); render(); }
+function toggleCollapse(id) { collapsed[id]=!collapsed[id]; closeMenu(); render(); }
+function expandAll()        { Object.keys(collapsed).forEach(k=>collapsed[k]=false); render(); }
+function collapseAll()      { Object.keys(children).forEach(id=>{ if(id!==rootId&&visibleKids(id).length>0) collapsed[id]=true; }); render(); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOVE PERSON
+// ─────────────────────────────────────────────────────────────────────────────
+let moveTargetId=null, moveSelectedId=null;
+
+function openMoveModal(id){
+  closeMenu(); moveTargetId=id; moveSelectedId=null;
+  const p=people[id];
+  const desc=new Set(); function getD(n){(children[n]||[]).forEach(c=>{desc.add(c);getD(c);});} getD(id);
+  const opts=Object.values(people).filter(q=>q.id!==id&&!desc.has(q.id)).sort((a,b)=>a.name.localeCompare(b.name));
+  window._moveOpts=opts;
+
+  document.getElementById('modal-title').textContent='Move: '+p.name;
+  document.getElementById('modal-body').innerHTML=`
+    <p style="font-size:12px;color:#666;margin-bottom:8px;">Currently reports to: <strong>${people[p.managerId]?.name||'—'}</strong></p>
+    <input class="minput" id="move-q" placeholder="Filter by name…" oninput="filterMove(this.value)" style="margin-bottom:0">
+    <div id="move-list"></div>
+    <p id="move-lbl" style="font-size:11px;color:#219EBC;margin-top:6px;min-height:14px;"></p>`;
+  document.getElementById('modal-ok').textContent='Move';
+  document.getElementById('modal-ok').onclick=doMove;
+  document.getElementById('modal-overlay').classList.add('open');
+  renderMoveList(opts);
+  document.getElementById('move-q').focus();
+}
+
+function renderMoveList(opts){
+  document.getElementById('move-list').innerHTML=opts.map(o=>`
+    <div class="move-opt ${o.id===moveSelectedId?'selected':''}" onclick="pickMove('${o.id}')" data-id="${o.id}">
+      <div class="move-opt-name">${o.name}</div>
+      <div class="move-opt-title">${o.title}</div>
+    </div>`).join('');
+}
+function filterMove(v){
+  const q=v.toLowerCase();
+  renderMoveList(q?window._moveOpts.filter(o=>o.name.toLowerCase().includes(q)||o.title.toLowerCase().includes(q)):window._moveOpts);
+}
+function pickMove(id){
+  moveSelectedId=id;
+  document.querySelectorAll('.move-opt').forEach(el=>el.classList.toggle('selected',el.dataset.id===id));
+  document.getElementById('move-lbl').textContent=id?'→ New manager: '+people[id].name:'';
+}
+function doMove(){
+  if(!moveSelectedId){alert('Select a new manager.');return;}
+  const oldMgr=people[moveTargetId].managerId;
+  if(oldMgr&&children[oldMgr]) children[oldMgr]=children[oldMgr].filter(c=>c!==moveTargetId);
+  people[moveTargetId].managerId=moveSelectedId;
+  children[moveSelectedId]=children[moveSelectedId]||[];
+  children[moveSelectedId].push(moveTargetId);
+  toast(`✓ ${people[moveTargetId].name} → ${people[moveSelectedId].name}`);
+  closeModal(); render();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADD / EDIT / REMOVE
+// ─────────────────────────────────────────────────────────────────────────────
+let mMode=null, mTarget=null;
+
+function openAddAgentModal(mgrId){
+  closeMenu(); mMode='add-agent'; mTarget=mgrId;
+  document.getElementById('modal-title').textContent='Add AI Agent under '+people[mgrId].name;
+  document.getElementById('modal-body').innerHTML=`
+    <label class="mlabel">Agent Name</label>
+    <input class="minput" id="m-name" placeholder="e.g. Claims Processing Agent">
+    <label class="mlabel">Description (optional)</label>
+    <input class="minput" id="m-title" placeholder="e.g. Automates prior auth reviews">`;
+  document.getElementById('modal-ok').textContent='Add Agent';
+  document.getElementById('modal-ok').style.background='#1a6b63';
+  document.getElementById('modal-ok').onclick=commitAddEdit;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('m-name').focus();
+}
+function openAddModal(mgrId){
+  closeMenu(); mMode='add'; mTarget=mgrId;
+  document.getElementById('modal-title').textContent='Add Direct Report to '+people[mgrId].name;
+  document.getElementById('modal-body').innerHTML=`
+    <label class="mlabel">Name</label><input class="minput" id="m-name" placeholder="First Last">
+    <label class="mlabel">Title</label><input class="minput" id="m-title" placeholder="Job Title">`;
+  document.getElementById('modal-ok').textContent='Add';
+  document.getElementById('modal-ok').onclick=commitAddEdit;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('m-name').focus();
+}
+function openEditModal(id){
+  closeMenu(); mMode='edit'; mTarget=id;
+  const p=people[id];
+  document.getElementById('modal-title').textContent='Edit Person';
+  document.getElementById('modal-body').innerHTML=`
+    <label class="mlabel">Name</label><input class="minput" id="m-name" value="${p.name}">
+    <label class="mlabel">Title</label><input class="minput" id="m-title" value="${p.title}">`;
+  document.getElementById('modal-ok').textContent='Save';
+  document.getElementById('modal-ok').onclick=commitAddEdit;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('m-name').focus();
+}
+function commitAddEdit(){
+  const name=(document.getElementById('m-name')||{}).value?.trim();
+  const title=(document.getElementById('m-title')||{}).value?.trim()||'';
+  if(!name) return;
+  // Reset button color (may have been set by agent modal)
+  document.getElementById('modal-ok').style.background='';
+  if(mMode==='add'||mMode==='add-agent'){
+    const nid=(mMode==='add-agent'?'agent_':'c_')+Date.now();
+    people[nid]={id:nid,name,title,managerId:mTarget};
+    children[nid]=[]; children[mTarget]=children[mTarget]||[]; children[mTarget].push(nid);
+    if(mMode==='add-agent') nodeState[nid]='agent'; // auto-color teal
+  } else { people[mTarget].name=name; people[mTarget].title=title; }
+  closeModal(); render();
+}
+function removeNode(id){
+  if(id===rootId) return;
+  const n = countDesc(id);
+  const label = `Remove ${people[id].name}${n>0?' and '+n+' report(s) beneath them':''}?`;
+  showConfirmModal(label, () => {
+    function del(nid){(children[nid]||[]).forEach(del);delete people[nid];delete children[nid];delete nodeState[nid];delete nodeLayout[nid];delete collapsed[nid];}
+    const mgr = people[id].managerId;
+    if(mgr && children[mgr]) children[mgr] = children[mgr].filter(c => c !== id);
+    del(id); closeMenu(); render();
+  });
+}
+
+function showConfirmModal(message, onConfirm){
+  document.getElementById('modal-title').textContent = 'Confirm';
+  document.getElementById('modal-body').innerHTML =
+    `<p style="font-size:13px;color:#333;line-height:1.6;">${message}</p>`;
+  document.getElementById('modal-ok').textContent = 'Remove';
+  document.getElementById('modal-ok').style.background = '#c0392b';
+  document.getElementById('modal-ok').onclick = () => {
+    closeModal();
+    document.getElementById('modal-ok').style.background = '';
+    onConfirm();
+  };
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function countDesc(id){return (children[id]||[]).reduce((s,c)=>s+1+countDesc(c),0);}
+
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('modal-ok').onclick=null;
+  mMode=null; mTarget=null; moveTargetId=null; moveSelectedId=null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LEGEND / SEARCH / BARS
+// ─────────────────────────────────────────────────────────────────────────────
+function renderLegend(){
+  let h='<span class="lbl">Key:</span>';
+  Object.entries(NODE_STATES).forEach(([k,v])=>{
+    h+=`<div class="legend-item" onclick="filterByState('${k}')">
+      <div class="legend-swatch" style="background:${v.bg};border-color:${v.border}"></div>${v.label}</div>`;
+  });
+  h+=`<span id="legend-hint">Click node · ⇆/⇅ layout · 🔀 move · 🤖 AI agent</span>`;
+  document.getElementById('legend').innerHTML=h;
+}
+
+function layoutBars(){
+  const hH=document.getElementById('header').offsetHeight;
+  const lEl=document.getElementById('legend');
+  const sEl=document.getElementById('search-results');
+  const lH=lEl.style.display==='none'?0:lEl.offsetHeight;
+  const sH=sEl.style.display==='none'?0:sEl.offsetHeight;
+  lEl.style.top=hH+'px';
+  sEl.style.top=(hH+lH)+'px';
+  document.getElementById('canvas-wrap').style.top=(hH+lH+sH)+'px';
+}
+function onSearch(val){
+  const sr=document.getElementById('search-results');
+  if(!val.trim()){sr.style.display='none';layoutBars();return;}
+  const q=val.toLowerCase();
+  const hits=Object.values(people).filter(p=>p.name.toLowerCase().includes(q)||p.title.toLowerCase().includes(q));
+  sr.style.display='flex';
+  sr.innerHTML=hits.length
+    ?hits.map(p=>`<div class="sr-tag" onclick="scrollToNode('${p.id}')"><strong>${p.name}</strong> · ${p.title}</div>`).join('')
+    :'<span style="color:#999;font-size:11px">No matches</span>';
+  layoutBars();
+}
+function scrollToNode(id){
+  document.querySelectorAll('.node.highlighted').forEach(n=>n.classList.remove('highlighted'));
+  const el=document.getElementById('node-'+id); if(!el) return;
+  el.classList.add('highlighted');
+  el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+}
+function filterByState(k){const id=Object.keys(nodeState).find(i=>nodeState[i]===k);if(id)scrollToNode(id);}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAN
+// ─────────────────────────────────────────────────────────────────────────────
+(()=>{
+  // Mouse-wheel zoom (Ctrl+scroll or pinch)
+  document.getElementById('canvas-wrap').addEventListener('wheel', e=>{
+    if(e.ctrlKey || e.metaKey){
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -10 : 10;
+      zoomStep(delta);
+    }
+  }, { passive: false });
+})();
+
+(()=>{
+  const wrap=document.getElementById('canvas-wrap');
+  let drag=false,sx,sy,slx,sly;
+  wrap.addEventListener('mousedown',e=>{
+    if(e.target.closest('.node')||e.target.closest('#ctx-menu')||e.target.closest('#modal-overlay')) return;
+    drag=true; sx=e.clientX; sy=e.clientY; slx=wrap.scrollLeft; sly=wrap.scrollTop;
+    wrap.style.cursor='grabbing'; e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{if(!drag)return;wrap.scrollLeft=slx-(e.clientX-sx);wrap.scrollTop=sly-(e.clientY-sy);});
+  document.addEventListener('mouseup',()=>{drag=false;wrap.style.cursor='grab';});
+})();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SAVE / EXPORT / IMPORT
+// ─────────────────────────────────────────────────────────────────────────────
+function buildSnapshot(){
+  // Save the complete children order for every node — this captures:
+  //   sibling reordering (move left/right)
+  //   manager reassignments
+  //   additions and deletions
+  // On load we rebuild people+children entirely from this single source of truth.
+  const deletedIds = PEOPLE_DEF.map(p=>p.id).filter(id=>!people[id]);
+  const allPeople  = Object.fromEntries(Object.entries(people).map(([id,p])=>[id,{...p}]));
+  const allChildren= Object.fromEntries(Object.entries(children).map(([id,arr])=>[id,[...arr]]));
+  return {
+    version:5, savedAt:new Date().toISOString(),
+    nodeState, nodeLayout, collapsed, vSpacingScale, hSpacingScale, zoomLevel,
+    deletedIds,   // kept for reference / future use
+    allPeople,    // complete people map (base + custom + edits)
+    allChildren,  // complete children arrays with current order
+  };
+}
+function applySnapshot(s){
+  // v5: restore full state directly — no reconstruction needed
+  if(s.version>=5 && s.allPeople && s.allChildren){
+    people   = Object.fromEntries(Object.entries(s.allPeople).map(([id,p])=>[id,{...p}]));
+    children = Object.fromEntries(Object.entries(s.allChildren).map(([id,arr])=>[id,[...arr]]));
+    nodeState = s.nodeState  || {};
+    nodeLayout= s.nodeLayout || {};
+    collapsed = s.collapsed  || {};
+    // Set rootId to whoever has no manager in the restored data
+    const restoredRoot = Object.values(people).find(p => !p.managerId);
+    if(restoredRoot) rootId = restoredRoot.id;
+    if(s.zoomLevel !== undefined){
+      zoomLevel = s.zoomLevel;
+      applyZoom();
+    }
+    if(s.vSpacingScale !== undefined){
+      vSpacingScale = s.vSpacingScale;
+      const vpct = Math.round(vSpacingScale*100);
+      const vsl = document.getElementById('vspacing-slider');
+      if(vsl){ vsl.value=vpct; document.getElementById('vspacing-val').textContent=vpct+'%'; }
+    }
+    if(s.hSpacingScale !== undefined){
+      hSpacingScale = s.hSpacingScale;
+      const hpct = Math.round(hSpacingScale*100);
+      const hsl = document.getElementById('hspacing-slider');
+      if(hsl){ hsl.value=hpct; document.getElementById('hspacing-val').textContent=hpct+'%'; }
+    }
+    return;
+  }
+
+  // Legacy v3/v4 fallback ────────────────────────────────────────────────────
+  initData();
+  nodeState=s.nodeState||{}; nodeLayout=s.nodeLayout||{}; collapsed=s.collapsed||{};
+
+  function deleteSubtree(nid){
+    (children[nid]||[]).forEach(deleteSubtree);
+    const mgr=people[nid]&&people[nid].managerId;
+    if(mgr&&children[mgr]) children[mgr]=children[mgr].filter(c=>c!==nid);
+    delete people[nid]; delete children[nid];
+    delete nodeState[nid]; delete nodeLayout[nid]; delete collapsed[nid];
+  }
+  (s.deletedIds||[]).forEach(id=>{ if(people[id]) deleteSubtree(id); });
+
+  Object.entries(s.editedPeople||{}).forEach(([id,p])=>{
+    if(!people[id]) return;
+    if(p.managerId&&p.managerId!==people[id].managerId){
+      const old=people[id].managerId;
+      if(old&&children[old]) children[old]=children[old].filter(c=>c!==id);
+      people[id].managerId=p.managerId;
+      children[p.managerId]=children[p.managerId]||[];
+      if(!children[p.managerId].includes(id)) children[p.managerId].push(id);
+    }
+    people[id].name=p.name; people[id].title=p.title;
+  });
+  Object.entries(s.customPeople||{}).forEach(([id,p])=>{
+    people[id]=p; children[p.managerId]=children[p.managerId]||[];
+    if(!children[p.managerId].includes(id)) children[p.managerId].push(id);
+    children[id]=s.customChildren?.[id]||[];
+  });
+}
+function exportJSON(){
+  const ts=new Date().toISOString().slice(0,10);
+  const blob=new Blob([JSON.stringify(buildSnapshot(),null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`OrgChart_${ts}.json`; a.click();
+  URL.revokeObjectURL(url); toast('✓ Exported OrgChart_'+ts+'.json');
+}
+function importJSON(evt){
+  const file=evt.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{try{applySnapshot(JSON.parse(e.target.result));render();toast('✓ '+file.name);}catch(err){alert('Error: '+err.message);}evt.target.value='';};
+  r.readAsText(file);
+}
+// ── Welcome screen ───────────────────────────────────────────────────────────
+function showWelcome(){
+  document.getElementById('welcome-overlay').classList.add('show');
+}
+function dismissWelcome(){
+  document.getElementById('welcome-overlay').classList.remove('show');
+}
+function loadJSONFromWelcome(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  evt.target.value='';
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      applySnapshot(JSON.parse(e.target.result));
+      render();
+      dismissWelcome();
+      toast('✓ Loaded '+file.name);
+    } catch(err){ 
+      const errEl = document.getElementById('welcome-error');
+      if(errEl){ errEl.textContent='Could not load file: '+err.message; errEl.style.display='block'; }
+    }
+  };
+  r.readAsText(file);
+}
+
+// ── Workday XLSX parser (pure JS, no library — works with file:// URLs) ──────
+function flipName(raw){
+  if(!raw) return '';
+  const s = String(raw).trim();
+  let name;
+  if(s.includes(',')){
+    // "Last, First M" → "First M Last"
+    const comma = s.indexOf(',');
+    const last  = s.slice(0, comma).trim();
+    const rest  = s.slice(comma + 1).trim();
+    name = rest + ' ' + last;
+  } else {
+    name = s;
+  }
+  return normalizeName(name);
+}
+
+// Strip middle initials and normalize whitespace so
+// "First M Last" and "First Last" both match
+function normalizeName(name){
+  // Remove single-letter tokens (middle initials like "M" or "M.")
+  return name
+    .replace(/\s+[A-Z]\.?(?=\s|$)/g, '')  // " M." or " M" before space/end
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Minimal XLSX reader using central directory (handles data-descriptor ZIPs)
+async function parseXLSX(arrayBuffer){
+  const bytes = new Uint8Array(arrayBuffer);
+
+  function u16(pos){ return bytes[pos] | (bytes[pos+1]<<8); }
+  function u32(pos){ return bytes[pos] | (bytes[pos+1]<<8) | (bytes[pos+2]<<16) | (bytes[pos+3]<<24); }
+
+  // 1. Find End of Central Directory (search backwards from end)
+  let eocd = -1;
+  for(let i = bytes.length - 22; i >= 0; i--){
+    if(bytes[i]===0x50&&bytes[i+1]===0x4B&&bytes[i+2]===0x05&&bytes[i+3]===0x06){ eocd=i; break; }
+  }
+  if(eocd < 0) throw new Error('Not a valid ZIP/XLSX file.');
+
+  const cdOffset  = u32(eocd + 16);
+  const cdEntries = u16(eocd + 10);
+
+  // 2. Build central directory index: filename → {compSize, uncompSize, compMethod, localOffset}
+  const cdIndex = {};
+  let pos = cdOffset;
+  for(let e = 0; e < cdEntries; e++){
+    if(u32(pos) !== 0x02014b50) break;
+    const compMethod  = u16(pos + 10);
+    const compSize    = u32(pos + 20);
+    const uncompSize  = u32(pos + 24);
+    const fnLen       = u16(pos + 28);
+    const exLen       = u16(pos + 30);
+    const cmLen       = u16(pos + 32);
+    const localOffset = u32(pos + 42);
+    const fname       = new TextDecoder().decode(bytes.slice(pos+46, pos+46+fnLen));
+    cdIndex[fname]    = { compMethod, compSize, uncompSize, localOffset };
+    pos += 46 + fnLen + exLen + cmLen;
+  }
+
+  // 3. Extract a named file using sizes from central directory
+  async function extractFile(name){
+    const entry = cdIndex[name];
+    if(!entry) return null;
+    // Local header: skip to data (30 + fnLen + extLen)
+    const lFnLen  = u16(entry.localOffset + 26);
+    const lExLen  = u16(entry.localOffset + 28);
+    const dataStart = entry.localOffset + 30 + lFnLen + lExLen;
+    const compressed = bytes.slice(dataStart, dataStart + entry.compSize);
+    if(entry.compMethod === 0) return compressed; // stored, no compression
+    // deflate-raw
+    const ds = new DecompressionStream('deflate-raw');
+    const w  = ds.writable.getWriter();
+    w.write(compressed); w.close();
+    const chunks = []; const r = ds.readable.getReader();
+    while(true){ const {done,value} = await r.read(); if(done) break; chunks.push(value); }
+    const out = new Uint8Array(chunks.reduce((a,c)=>a+c.length,0));
+    let off=0; chunks.forEach(c=>{out.set(c,off);off+=c.length;});
+    return out;
+  }
+
+  const dec = new TextDecoder();
+
+  // 1. Read shared strings
+  const ssBytes = await extractFile('xl/sharedStrings.xml');
+  const ssXml   = ssBytes ? dec.decode(ssBytes) : '';
+  const sharedStrings = [];
+  const siRe = /<si>([\s\S]*?)<\/si>/g;
+  let m;
+  while((m = siRe.exec(ssXml)) !== null){
+    const text = m[1].replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#x[0-9A-Fa-f]+;/g, c=>String.fromCharCode(parseInt(c.slice(3,-1),16)));
+    sharedStrings.push(text);
+  }
+
+  // 2. Read workbook to find first sheet relationship
+  const wbBytes = await extractFile('xl/workbook.xml');
+  const wbXml   = wbBytes ? dec.decode(wbBytes) : '';
+  const sheetMatch = wbXml.match(/<sheet [^/]*r:id="(rId\d+)"/);
+  const rId = sheetMatch ? sheetMatch[1] : 'rId1';
+
+  // 3. Read workbook rels to resolve sheet path
+  const relBytes = await extractFile('xl/_rels/workbook.xml.rels');
+  const relXml   = relBytes ? dec.decode(relBytes) : '';
+  let sheetPath  = 'xl/worksheets/sheet1.xml'; // fallback
+  const relRe = new RegExp(`Id="${rId}"[^>]*Target="([^"]+)"`);
+  const relM  = relXml.match(relRe);
+  if(relM) sheetPath = 'xl/' + relM[1].replace(/^\//,'').replace(/^xl\//,'');
+
+  // 4. Read and parse sheet XML
+  const shBytes = await extractFile(sheetPath);
+  if(!shBytes) throw new Error('Could not find worksheet in file.');
+  const shXml = dec.decode(shBytes);
+
+  // Parse rows
+  const rows = [];
+  const rowRe = /<row [^>]*>([\s\S]*?)<\/row>/g;
+  let headerMap = null;
+
+  while((m = rowRe.exec(shXml)) !== null){
+    const rowXml = m[1];
+    const cells  = {};
+    const cellRe = /<c r="([A-Z]+)(\d+)"([^>]*)>([\s\S]*?)<\/c>/g;
+    let cm;
+    while((cm = cellRe.exec(rowXml)) !== null){
+      const col   = cm[1];
+      const attr  = cm[3];
+      const inner = cm[4];
+      let val = null;
+
+      if(attr.includes('t="inlineStr"') || attr.includes('t="str"')){
+        // Workday exports all text as inlineStr: <is><t>value</t></is>
+        const tMatch = inner.match(/<t[^>]*>([\s\S]*?)<\/t>/);
+        if(tMatch) val = tMatch[1];
+      } else if(attr.includes('t="s"')){
+        // Shared string reference
+        const vMatch = inner.match(/<v>([\s\S]*?)<\/v>/);
+        if(vMatch) val = sharedStrings[parseInt(vMatch[1])] || '';
+      } else {
+        // Plain numeric / date value
+        const vMatch = inner.match(/<v>([\s\S]*?)<\/v>/);
+        if(vMatch) val = vMatch[1];
+      }
+
+      if(val !== null) cells[col] = String(val).trim();
+    }
+
+    if(!headerMap){
+      // First row = headers
+      headerMap = {};
+      Object.entries(cells).forEach(([col, val]) => { headerMap[val] = col; });
+    } else {
+      const get = key => headerMap[key] ? (cells[headerMap[key]] || '') : '';
+      rows.push({
+        name:  get('Name'),
+        title: get('Business Title') || get('Line Detail 1'),
+        mgr:   get('Manager'),
+        uid:   get('Unique Identifier'),
+        mgrUid: get('Reports To'),
+      });
+    }
+  }
+
+  if(!rows.length) throw new Error('No data rows found.');
+
+  // Auto-detect format
+  const cols = Object.keys(headerMap);
+  let format = null;
+  if(cols.includes('Name') && cols.includes('Manager') && cols.includes('Business Title')){
+    format = 'myteam';
+  } else if(cols.includes('Name') && cols.includes('Reports To') && (cols.includes('Line Detail 1') || cols.includes('Unique Identifier'))){
+    format = 'dept';
+  }
+  if(!format) throw new Error(
+    'Unrecognized format. Expected either:\n' +
+    '• My Team Employment Data: columns Name, Manager, Business Title\n' +
+    '• Department export: columns Name, Reports To, Line Detail 1'
+  );
+
+  return { rows, format };
+}
+
+function loadWorkday(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  evt.target.value = '';
+
+  const errEl = document.getElementById('welcome-error');
+  if(errEl){ errEl.style.display='none'; errEl.textContent=''; }
+
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const { rows, format } = await parseXLSX(e.target.result);
+
+      let parsed = [];
+      const nameToId = {};
+
+      if(format === 'myteam'){
+        // "My Team Employment Data" format — name matching
+        rows.forEach((r, i) => {
+          const name  = flipName(r.name);
+          const title = r.title;
+          const mgr   = flipName(r.mgr);
+          const id    = 'wd_' + i;
+          if(name){ nameToId[name] = id; }
+          parsed.push({ id, name, title, mgrName: mgr, managerId: null });
+        });
+        parsed = parsed.filter(p => p.name);
+
+      } else if(format === 'dept'){
+        // Department export — uses Unique Identifier + Reports To ID
+        const idMap = {}; // uniqueId → wd_i
+
+        // First pass: register all rows
+        const rawParsed = [];
+        rows.forEach((r, i) => {
+          const uid       = (r.uid || '').trim();
+          const name      = (r.name || '').trim();
+          const title     = (r.title || '').trim();
+          const reportsTo = (r.mgrUid || '').trim();
+          const id = 'wd_' + i;
+          if(uid) idMap[uid] = id;
+          rawParsed.push({ id, uid, name, title, _reportsToUid: reportsTo, managerId: null });
+        });
+
+        // Resolve UIDs to internal IDs
+        rawParsed.forEach(p => {
+          if(p._reportsToUid && idMap[p._reportsToUid]){
+            p.managerId = idMap[p._reportsToUid];
+          }
+        });
+
+        // Find the root (blank reportsTo)
+        const deptRoot = rawParsed.find(p => !p._reportsToUid);
+
+        // Filter out Workday "inherited department" ghost entries:
+        // These are rows where the person reports to themselves (same name+title
+        // as someone already seen, or managerId resolves to a person with the
+        // same name). Keep only the first occurrence of each name.
+        const seenNames = new Set();
+        rawParsed.forEach(p => {
+          if(!p.name) return;
+          // Skip if this is a duplicate name reporting to a person with the same name
+          // (Workday inherited-dept artifact)
+          const mgr = rawParsed.find(r => r.id === p.managerId);
+          const isSelfReport = mgr && mgr.name === p.name;
+          const isDuplicateName = seenNames.has(p.name) && isSelfReport;
+          if(!isDuplicateName){
+            seenNames.add(p.name);
+            parsed.push(p);
+            if(p.name) nameToId[p.name] = p.id;
+          }
+        });
+      }
+
+      // Build temp tree using ALL manager name references — including names
+      // that appear only in the Manager column (e.g. the report runner)
+      const tempChildren = {};
+      const tempParent   = {};
+      const managerNameCount = {}; // how many direct reports each manager name has
+
+      // First pass: register all known people by ID
+      parsed.forEach(p => { tempChildren[p.id] = []; });
+
+      // Count how often each manager name appears
+      parsed.forEach(p => {
+        if(p.mgrName) managerNameCount[p.mgrName] = (managerNameCount[p.mgrName]||0) + 1;
+      });
+
+      // Resolve manager IDs
+      // dept format: managerId already set from UID; myteam: resolve by name
+      parsed.forEach(p => {
+        if(format === 'myteam'){
+          p.managerId = nameToId[p.mgrName] || null;
+        }
+        if(p.managerId && tempChildren[p.managerId]){
+          tempChildren[p.managerId].push(p.id);
+          tempParent[p.id] = p.managerId;
+        }
+      });
+
+      // Shared memoized descendant counter
+      const memo = {};
+      function countDescM(id){
+        if(memo[id]!==undefined) return memo[id];
+        memo[id] = (tempChildren[id]||[]).reduce((s,c) => s + 1 + countDescM(c), 0);
+        return memo[id];
+      }
+
+      // Follow any person up to their topmost ancestor within the dataset
+      function findRoot(id){
+        let cur = id, seen = new Set();
+        while(tempParent[cur] && !seen.has(cur)){ seen.add(cur); cur = tempParent[cur]; }
+        return cur;
+      }
+
+      // Unique roots: people with no parent in dataset
+      const rootSet  = new Set(parsed.map(p => findRoot(p.id)));
+      const allRoots = [...rootSet].map(id => parsed.find(p => p.id === id)).filter(Boolean);
+
+      // SPECIAL CASE: if the actual top-of-org (e.g. the report runner) doesn't
+      // appear as an employee row but IS referenced as manager by many people,
+      // synthesize a root node for them.
+      // Find manager names NOT in nameToId that have the most direct references
+      const missingManagers = Object.entries(managerNameCount)
+        .filter(([name]) => !nameToId[name])
+        .sort((a,b) => b[1] - a[1]);
+
+      console.log('Org root candidates (in dataset):', allRoots.map(p=>({name:p.name, count:countDescM(p.id)})));
+      console.log('Manager names NOT in dataset:', missingManagers.slice(0,5));
+
+      // If the top missing manager has more direct reports than the top in-dataset root,
+      // synthesize them as root and re-parent their direct reports
+      const topMissingName  = missingManagers[0]?.[0];
+      const topMissingCount = missingManagers[0]?.[1] || 0;
+      const topInDataset    = allRoots.sort((a,b) => countDescM(b.id)-countDescM(a.id))[0];
+      const topInCount      = topInDataset ? countDescM(topInDataset.id) : 0;
+
+      let root, finalTempChildren = tempChildren;
+
+      // Use direct-report count (managerNameCount) for missing managers,
+      // but for in-dataset candidates use their direct children count (not full subtree)
+      // This correctly identifies the org head (most direct reports) vs deep subtree owners
+      const topInByDirects = allRoots.sort((a,b) =>
+        (tempChildren[b.id]||[]).length - (tempChildren[a.id]||[]).length
+      )[0];
+      const topInDirectCount = topInByDirects ? (tempChildren[topInByDirects.id]||[]).length : 0;
+
+      console.log('Top missing manager:', topMissingName, 'direct refs:', topMissingCount);
+      console.log('Top in-dataset by directs:', topInByDirects?.name, 'directs:', topInDirectCount);
+
+      if(topMissingName && topMissingCount > topInDirectCount){
+        // Synthesize the missing root
+        const synthId = 'synth_root';
+        const synthPerson = { id: synthId, name: topMissingName, title: '', managerId: null };
+        parsed.push(synthPerson);
+        nameToId[topMissingName] = synthId;
+        tempChildren[synthId] = [];
+
+        // Re-parent anyone whose manager was this missing name
+        parsed.forEach(p => {
+          if(p.mgrName === topMissingName && p.id !== synthId){
+            p.managerId = synthId;
+            tempChildren[synthId].push(p.id);
+            tempParent[p.id] = synthId;
+          }
+        });
+        delete memo[synthId]; // reset memo for new node
+        root = synthPerson;
+        toast('ℹ Root "' + topMissingName + '" synthesized (not in Workday export rows)');
+      } else if(topInDataset){
+        root = topInDataset;
+      } else {
+        // Last resort: show picker
+        const sortedRoots = allRoots.sort((a,b) => countDescM(b.id)-countDescM(a.id));
+        showRootPicker(sortedRoots, (chosenId) => {
+          const chosenRoot = sortedRoots.find(p => p.id === chosenId);
+          buildOrgFromRoot(chosenRoot, parsed, tempChildren, file);
+        });
+        return;
+      }
+
+      buildOrgFromRoot(root, parsed, tempChildren, file);
+    } catch(err){
+      const msg = 'Could not parse file: ' + err.message;
+      const errEl2 = document.getElementById('welcome-error');
+      if(errEl2){ errEl2.textContent=msg; errEl2.style.display='block'; }
+      toast('⚠ ' + msg);
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function buildOrgFromRoot(root, parsed, tempChildren, file){
+  function collectTree(id, set){ set.add(id); (tempChildren[id]||[]).forEach(c => collectTree(c, set)); return set; }
+  const treeIds = collectTree(root.id, new Set());
+  const filteredParsed = parsed.filter(p => treeIds.has(p.id));
+
+  people={};children={};nodeState={};nodeLayout={};collapsed={};
+  rootId = root.id;
+  filteredParsed.forEach(p => {
+    people[p.id]   = { id:p.id, name:p.name, title:p.title, managerId:p.managerId };
+    children[p.id] = [];
+  });
+  filteredParsed.forEach(p => {
+    if(p.managerId && children[p.managerId]) children[p.managerId].push(p.id);
+  });
+
+  dismissWelcome();
+  hideRootPicker();
+  render();
+  toast('✓ Loaded ' + filteredParsed.length + ' people from ' + file.name);
+}
+
+// ── Help modal ───────────────────────────────────────────────────────────────
+function showHelp(){
+  document.getElementById('help-overlay').classList.add('open');
+}
+function hideHelp(){
+  document.getElementById('help-overlay').classList.remove('open');
+}
+function helpOverlayClick(e){
+  if(e.target===document.getElementById('help-overlay')) hideHelp();
+}
+
+// ── Zoom ─────────────────────────────────────────────────────────────────────
+let zoomLevel = 100; // percent
+
+function applyZoom(){
+  const canvas = document.getElementById('canvas');
+  canvas.style.transform = `scale(${zoomLevel/100})`;
+  // Update scroll container size to match scaled content
+  // (transform doesn't change layout flow, so we set explicit size)
+  const w = canvas.scrollWidth  * (zoomLevel/100);
+  const h = canvas.scrollHeight * (zoomLevel/100);
+  canvas.style.width  = '';
+  canvas.style.height = '';
+  document.getElementById('zoom-val').textContent = zoomLevel + '%';
+}
+
+function zoomStep(delta){
+  zoomLevel = Math.max(20, Math.min(150, zoomLevel + delta));
+  applyZoom();
+}
+
+function zoomFit(){
+  const wrap   = document.getElementById('canvas-wrap');
+  const canvas = document.getElementById('canvas');
+  // Reset zoom to measure natural size
+  canvas.style.transform = 'scale(1)';
+  const cw = canvas.scrollWidth;
+  const ch = canvas.scrollHeight;
+  const ww = wrap.clientWidth;
+  const wh = wrap.clientHeight;
+  const scaleW = ww / cw;
+  const scaleH = wh / ch;
+  const scale  = Math.min(scaleW, scaleH, 1); // never zoom in beyond 100%
+  zoomLevel = Math.max(20, Math.round(scale * 100));
+  applyZoom();
+  // Scroll to top-left after fitting
+  wrap.scrollLeft = 0;
+  wrap.scrollTop  = 0;
+}
+
+function exportPNG(){
+  // Re-render the chart onto an HTML5 Canvas — works offline, no CDN needed.
+  // We use the existing layout + NODE_STATES data and draw everything manually.
+
+  if(!people[rootId]){ toast('No chart to export.'); return; }
+
+  const SCALE   = 2;       // retina 2x
+  const FONT    = 'IBM Plex Sans, system-ui, sans-serif';
+  const CONN    = 'rgba(2,48,71,0.28)';
+
+  // Compute layout at natural size
+  const layout  = computeLayout(rootId, NODE_H);
+  const W       = (layout.subtreeW + PAD * 2) * SCALE;
+  const H       = (layout.subtreeH + PAD * 2) * SCALE;
+
+  const cv = document.createElement('canvas');
+  cv.width  = W;
+  cv.height = H;
+  const ctx = cv.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+
+  // White background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W / SCALE, H / SCALE);
+
+  // ── Draw connectors ──────────────────────────────────────────────────────
+  function line(x1, y1, x2, y2){
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  }
+
+  function drawConnsCanvas(layout, ox, oy){
+    const id   = layout.id;
+    const lout = getLayout(id);
+    const nx   = ox + layout.x;
+    const ny   = oy + layout.y;
+    const nh   = NODE_H;
+
+    if(lout === 'h' || lout === 'hs'){
+      const busOnly  = lout==='hs' ? layout.kids.filter(k=>k._isBus)  : layout.kids;
+      const sideOnly = lout==='hs' ? layout.kids.filter(k=>k._isSide) : [];
+
+      if(layout.kids.length > 0){
+        const py   = ny + nh;
+        const midY = py + vGap(0)/2;
+        line(nx + NODE_W/2, py, nx + NODE_W/2, midY);
+
+        if(busOnly.length > 0){
+          const fkl = busOnly[0];
+          const lkl = busOnly[busOnly.length-1];
+          const fox  = ox + layout.x + fkl._offsetX - layout.x;
+          const lox2 = ox + layout.x + lkl._offsetX - layout.x;
+
+          let barLeft  = fox + fkl.x + NODE_W/2;
+          let barRight = lox2 + lkl.x + NODE_W/2;
+
+          let spineX = null;
+          if(sideOnly.length > 0){
+            const fs = sideOnly[0];
+            spineX = (ox + layout.x + fs._offsetX - layout.x) + fs.x - 10;
+            barRight = spineX;
+          }
+
+          line(Math.min(barLeft, nx+NODE_W/2), midY, barRight, midY);
+          busOnly.forEach(kl=>{
+            const kox2 = ox + layout.x + kl._offsetX - layout.x;
+            const koy2 = oy + layout.y + kl._offsetY;
+            line(kox2 + kl.x + NODE_W/2, midY, kox2 + kl.x + NODE_W/2, koy2 + kl.y);
+            drawConnsCanvas(kl, kox2, koy2);
+          });
+
+          if(spineX !== null && sideOnly.length > 0){
+            const ls = sideOnly[sideOnly.length-1];
+            const lSky = oy + layout.y + ls._offsetY + ls.y;
+            line(spineX, midY, spineX, lSky + NODE_H/2);
+            sideOnly.forEach(kl=>{
+              const kox2 = ox + layout.x + kl._offsetX - layout.x;
+              const koy2 = oy + layout.y + kl._offsetY;
+              const armY = koy2 + kl.y + NODE_H/2;
+              line(spineX, armY, kox2 + kl.x, armY);
+              drawConnsCanvas(kl, kox2, koy2);
+            });
+          }
+        }
+      }
+    } else if(lout === 'v2'){
+      const SPINE_INSET = 16;
+      const leftKids  = layout.kids.filter(k=>k._col==='left');
+      const rightKids = layout.kids.filter(k=>k._col==='right');
+      const py   = ny + nh;
+      const midY = py + vGap(0)/2;
+      line(nx + NODE_W/2, py, nx + NODE_W/2, midY);
+      const lFirst = leftKids[0], rFirst = rightKids[0];
+      if(lFirst && rFirst){
+        const lKox = ox + layout.x + lFirst._offsetX - layout.x;
+        const rKox = ox + layout.x + rFirst._offsetX - layout.x;
+        const lSX = lKox + lFirst.x + SPINE_INSET;
+        const rSX = rKox + rFirst.x + SPINE_INSET;
+        line(lSX, midY, rSX, midY);
+      }
+      [leftKids, rightKids].forEach(colKids => {
+        if(!colKids.length) return;
+        const f = colKids[0], l = colKids[colKids.length-1];
+        const fKox = ox + layout.x + f._offsetX - layout.x;
+        const lKox = ox + layout.x + l._offsetX - layout.x;
+        const spineX = fKox + f.x + SPINE_INSET;
+        line(spineX, midY, spineX, lKox + l.y + NODE_H/2);
+        colKids.forEach(kl=>{
+          const kox2 = ox + layout.x + kl._offsetX - layout.x;
+          const koy2 = oy + layout.y + kl._offsetY;
+          line(spineX, koy2 + kl.y + NODE_H/2, kox2 + kl.x, koy2 + kl.y + NODE_H/2);
+          drawConnsCanvas(kl, kox2, koy2);
+        });
+      });
+    } else if(lout === 'h2'){
+      const py    = ny + nh;
+      const vg    = layout.vg || vGap(0);
+      const midY  = py + vg/2;
+      const row1H = layout.row1H || 0;
+      const rowGap= layout.rowGap || Math.round(vg*0.7);
+      const row1  = layout.kids.filter(k=>k._row===1);
+      const row2  = layout.kids.filter(k=>k._row===2);
+      const row2MidY = py + vg + row1H + rowGap/2;
+      line(nx + NODE_W/2, py, nx + NODE_W/2, row2MidY);
+      [row1, row2].forEach((rowKids, ri) => {
+        if(!rowKids.length) return;
+        const rowMidY = ri===0 ? midY : row2MidY;
+        const f = rowKids[0], l = rowKids[rowKids.length-1];
+        const fox = ox + layout.x + f._offsetX - layout.x;
+        const lox = ox + layout.x + l._offsetX - layout.x;
+        if(rowKids.length>1) line(fox+f.x+NODE_W/2, rowMidY, lox+l.x+NODE_W/2, rowMidY);
+        rowKids.forEach(kl=>{
+          const kox2 = ox + layout.x + kl._offsetX - layout.x;
+          const koy2 = oy + layout.y + kl._offsetY;
+          line(kox2+kl.x+NODE_W/2, rowMidY, kox2+kl.x+NODE_W/2, koy2+kl.y);
+          drawConnsCanvas(kl, kox2, koy2);
+        });
+      });
+    } else {
+      // Vertical
+      const SPINE_INSET = 16;
+      const spineX = nx + SPINE_INSET;
+      if(layout.kids.length > 0){
+        const lastKl  = layout.kids[layout.kids.length-1];
+        const lKoy    = oy + layout.y + lastKl._offsetY;
+        const spineBot= lKoy + lastKl.y + NODE_H/2;
+        line(spineX, ny + nh, spineX, spineBot);
+        layout.kids.forEach(kl=>{
+          const kox2 = ox + layout.x + kl._offsetX - layout.x;
+          const koy2 = oy + layout.y + kl._offsetY;
+          const armY = koy2 + kl.y + NODE_H/2;
+          line(spineX, armY, kox2 + kl.x, armY);
+          drawConnsCanvas(kl, kox2, koy2);
+        });
+      }
+    }
+  }
+
+  ctx.strokeStyle = CONN;
+  ctx.lineWidth   = 1.5;
+  drawConnsCanvas(layout, PAD, PAD);
+
+  // ── Draw nodes ──────────────────────────────────────────────────────────
+  function drawNodesCanvas(layout, ox, oy){
+    const id    = layout.id;
+    const p     = people[id];
+    if(!p) return;
+    const state = nodeState[id] || 'default';
+    const col   = NODE_STATES[state];
+    const nx    = ox + layout.x;
+    const ny    = oy + layout.y;
+
+    // Box
+    ctx.fillStyle   = col.bg;
+    ctx.strokeStyle = col.border;
+    ctx.lineWidth   = 1.5;
+    ctx.beginPath();
+    ctx.rect(nx, ny, NODE_W, NODE_H);
+    ctx.fill(); ctx.stroke();
+
+    // Name
+    ctx.fillStyle = col.text;
+    ctx.font      = `700 11px ${FONT}`;
+    ctx.textBaseline = 'top';
+    const maxW = NODE_W - 14;
+    let nameText = p.name;
+    // Truncate if too wide
+    while(ctx.measureText(nameText).width > maxW && nameText.length > 1)
+      nameText = nameText.slice(0, -1);
+    if(nameText !== p.name) nameText += '…';
+    ctx.fillText(nameText, nx + 8, ny + 10);
+
+    // Title
+    ctx.font = `400 9px ${FONT}`;
+    ctx.globalAlpha = 0.72;
+    let titleText = p.title;
+    while(ctx.measureText(titleText).width > maxW && titleText.length > 1)
+      titleText = titleText.slice(0, -1);
+    if(titleText !== p.title) titleText += '…';
+    ctx.fillText(titleText, nx + 8, ny + 26);
+    ctx.globalAlpha = 1;
+
+    layout.kids.forEach(kl => {
+      drawNodesCanvas(kl, ox + layout.x + kl._offsetX - layout.x, oy + layout.y + kl._offsetY);
+    });
+  }
+
+  drawNodesCanvas(layout, PAD, PAD);
+
+  // ── Download ─────────────────────────────────────────────────────────────
+  cv.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.download = 'OrgChart.png';
+    a.href     = url;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('✓ PNG exported');
+  }, 'image/png');
+}
+
+// ── Auto-shrink node name text to fit ────────────────────────────────────────
+function fitNodeText(){
+  const NODE_INNER_W = 175 - 11 - 28 - 4; // node width minus padding and button space
+  const MIN_SIZE = 8;
+  const MAX_SIZE = 12;
+  document.querySelectorAll('.node-name').forEach(el => {
+    el.style.fontSize = MAX_SIZE + 'px';
+    let size = MAX_SIZE;
+    while(el.scrollWidth > NODE_INNER_W + 2 && size > MIN_SIZE){
+      size -= 0.5;
+      el.style.fontSize = size + 'px';
+    }
+  });
+}
+
+// ── Root picker ───────────────────────────────────────────────────────────────
+let _pickerCallback = null;
+let _pickerRoots    = null;
+let _pickerParsed   = null;
+let _pickerChildren = null;
+let _pickerFile     = null;
+
+function showRootPicker(sortedRoots, callback){
+  _pickerCallback = callback;
+  const sel = document.getElementById('root-picker-select');
+  sel.innerHTML = sortedRoots.map(p =>
+    `<option value="${p.id}">${p.name} — ${p.title}</option>`
+  ).join('');
+  document.getElementById('root-picker-overlay').style.display = 'flex';
+}
+
+function hideRootPicker(){
+  document.getElementById('root-picker-overlay').style.display = 'none';
+}
+
+function confirmRootPicker(){
+  const id = document.getElementById('root-picker-select').value;
+  if(_pickerCallback) _pickerCallback(id);
+}
+
+function saveState(){localStorage.setItem('orgchart_v5',JSON.stringify(buildSnapshot()));toast('✓ Saved to browser');}
+function loadState(){const raw=localStorage.getItem('orgchart_v5');if(!raw){alert('No browser save found.');return;}applySnapshot(JSON.parse(raw));render();toast('✓ Loaded from browser');}
+function onVSpacingChange(val){
+  vSpacingScale = val/100;
+  document.getElementById('vspacing-val').textContent = val+'%';
+  render();
+}
+function onHSpacingChange(val){
+  hSpacingScale = val/100;
+  document.getElementById('hspacing-val').textContent = val+'%';
+  render();
+}
+function resetColors(){if(!confirm('Reset all colors?'))return;nodeState={};render();}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────────────────────────
+let toastT;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+initData();
+
+// Show welcome screen if no browser save exists
+const _hasSave = !!localStorage.getItem('orgchart_v5');
+if(_hasSave){
+  try {
+    applySnapshot(JSON.parse(localStorage.getItem('orgchart_v5')));
+    render();
+  } catch(e){
+    console.warn('Browser save corrupt, clearing:', e);
+    localStorage.removeItem('orgchart_v5');
+    initData();
+    render();
+    showWelcome();
+  }
+} else {
+  render();
+  showWelcome();
+}
+</script>
+</body>
+</html>
