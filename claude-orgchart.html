@@ -807,12 +807,12 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
 
         <div class="w-divider">Resume a previous chart</div>
 
-        <!-- Option 3: Restore JSON -->
-        <button class="w-option w-opt-c" onclick="document.getElementById('welcome-json-in').click()">
+        <!-- Option 3: Load a saved chart (browser or JSON) -->
+        <button class="w-option w-opt-c" onclick="loadSavedChart()">
           <div class="w-option-icon">📁</div>
           <div class="w-option-body">
-            <div class="w-option-name">Restore a saved chart</div>
-            <div class="w-option-desc">Load a JSON file from a previous session</div>
+            <div class="w-option-name">Load a saved chart</div>
+            <div class="w-option-desc">Resume from browser or load a saved JSON file</div>
           </div>
           <div class="w-option-arrow">›</div>
         </button>
@@ -889,6 +889,88 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
     <div style="display:flex;gap:8px;">
       <button class="btn-p" onclick="confirmRootPicker()">Build Chart</button>
       <button class="btn-s" onclick="hideRootPicker()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Load source modal (browser save vs JSON) -->
+<style>
+#load-source-overlay {
+  display: none; position: fixed; inset: 0; z-index: 900;
+  background: rgba(0,0,0,.45);
+  align-items: center; justify-content: center;
+}
+#load-source-overlay.open { display: flex; }
+#load-source-box {
+  background: #fff; border-radius: 14px;
+  width: min(400px, 90vw);
+  box-shadow: 0 12px 40px rgba(0,0,0,.2);
+  font-family: 'IBM Plex Sans', sans-serif;
+  overflow: hidden;
+}
+#load-source-header {
+  background: #023047; color: #fff;
+  padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+#load-source-header h2 { font-size: 14px; font-weight: 700; }
+#load-source-close {
+  background: rgba(255,255,255,.15); border: none; color: #fff;
+  width: 26px; height: 26px; border-radius: 5px; cursor: pointer;
+  font-size: 14px; display: flex; align-items: center; justify-content: center;
+}
+#load-source-close:hover { background: rgba(255,255,255,.28); }
+#load-source-body { padding: 18px 20px 20px; }
+#load-source-desc {
+  font-size: 11.5px; color: #667; margin-bottom: 16px; line-height: 1.5;
+}
+.ls-option {
+  display: flex; align-items: center; gap: 14px;
+  border: 1px solid #eaeef2; border-radius: 10px;
+  padding: 13px 15px; margin-bottom: 9px;
+  cursor: pointer; background: none; width: 100%;
+  text-align: left; font-family: inherit;
+  transition: border-color .15s, background .15s;
+}
+.ls-option:last-child { margin-bottom: 0; }
+.ls-option:hover { border-color: #8ECAE6; background: #f4fbff; }
+.ls-icon {
+  width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 17px;
+}
+.ls-opt-browser .ls-icon { background: #EDF9F0; }
+.ls-opt-json .ls-icon { background: #f4f4f6; }
+.ls-body { flex: 1; }
+.ls-name { font-size: 13px; font-weight: 600; color: #023047; margin-bottom: 2px; }
+.ls-desc { font-size: 10.5px; color: #7a8fa0; line-height: 1.4; }
+.ls-arrow { font-size: 14px; color: #c8d8e4; flex-shrink: 0; }
+.ls-option:hover .ls-arrow { color: #8ECAE6; }
+</style>
+
+<div id="load-source-overlay" onclick="if(event.target===this)closLoadSource()">
+  <div id="load-source-box">
+    <div id="load-source-header">
+      <h2>Load a saved chart</h2>
+      <button id="load-source-close" onclick="closLoadSource()">✕</button>
+    </div>
+    <div id="load-source-body">
+      <div id="load-source-desc">A browser-saved chart was found. Load it or choose a JSON file instead.</div>
+      <button class="ls-option ls-opt-browser" onclick="loadFromBrowser()">
+        <div class="ls-icon">🔄</div>
+        <div class="ls-body">
+          <div class="ls-name">Continue from browser</div>
+          <div class="ls-desc" id="ls-browser-desc">Load your most recently saved chart</div>
+        </div>
+        <div class="ls-arrow">›</div>
+      </button>
+      <button class="ls-option ls-opt-json" onclick="loadFromJSON()">
+        <div class="ls-icon">📁</div>
+        <div class="ls-body">
+          <div class="ls-name">Load a JSON file</div>
+          <div class="ls-desc">Browse for a saved JSON from a previous export</div>
+        </div>
+        <div class="ls-arrow">›</div>
+      </button>
     </div>
   </div>
 </div>
@@ -2399,6 +2481,44 @@ function triggerWdUpload(){
     document.getElementById('workday-file-in').click();
   }
 }
+function loadSavedChart(){
+  const hasBrowserSave = !!localStorage.getItem('orgchart_v5');
+  if(hasBrowserSave){
+    // Show modal with browser vs JSON choice
+    // Annotate with saved date if available
+    try {
+      const snap = JSON.parse(localStorage.getItem('orgchart_v5'));
+      const savedAt = snap.savedAt ? new Date(snap.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : null;
+      document.getElementById('ls-browser-desc').textContent = savedAt ? `Last saved ${savedAt}` : 'Load your most recently saved chart';
+    } catch(e){}
+    document.getElementById('load-source-overlay').classList.add('open');
+  } else {
+    // No browser save — go straight to JSON picker
+    document.getElementById('welcome-json-in').click();
+  }
+}
+
+function closLoadSource(){
+  document.getElementById('load-source-overlay').classList.remove('open');
+}
+
+function loadFromBrowser(){
+  closLoadSource();
+  const raw = localStorage.getItem('orgchart_v5');
+  if(!raw){ toast('No browser save found.'); return; }
+  try {
+    applySnapshot(JSON.parse(raw));
+    render(); setTimeout(zoomFit,120);
+    dismissWelcome();
+    toast('✓ Loaded from browser');
+  } catch(e){ toast('⚠ Browser save could not be loaded.'); }
+}
+
+function loadFromJSON(){
+  closLoadSource();
+  document.getElementById('welcome-json-in').click();
+}
+
 function loadJSONFromWelcome(evt){
   const file = evt.target.files[0];
   if(!file) return;
@@ -3418,7 +3538,12 @@ function updateHeaderSub(){
   sub.textContent = root.name + ' · ' + count + ' ' + (count === 1 ? 'person' : 'people');
 }
 
-function saveState(){localStorage.setItem('orgchart_v5',JSON.stringify(buildSnapshot()));toast('✓ Saved to browser');}
+function saveState(){
+  const snap = buildSnapshot();
+  snap.savedAt = new Date().toISOString();
+  localStorage.setItem('orgchart_v5', JSON.stringify(snap));
+  toast('✓ Saved to browser');
+}
 function loadState(){const raw=localStorage.getItem('orgchart_v5');if(!raw){alert('No browser save found.');return;}applySnapshot(JSON.parse(raw));render();setTimeout(zoomFit,120);toast('✓ Loaded from browser');}
 function onVSpacingChange(val){
   vSpacingScale = val/100;
@@ -3595,22 +3720,9 @@ initData();
 })();
 
 // Show welcome screen if no browser save exists
-const _hasSave = !!localStorage.getItem('orgchart_v5');
-if(_hasSave){
-  try {
-    applySnapshot(JSON.parse(localStorage.getItem('orgchart_v5')));
-    render();
-  } catch(e){
-    console.warn('Browser save corrupt, clearing:', e);
-    localStorage.removeItem('orgchart_v5');
-    initData();
-    render();
-    showWelcome();
-  }
-} else {
-  render();
-  showWelcome();
-}
+// Always show welcome on load — user chooses how to start
+render();
+showWelcome();
 
 // ── Rotating taglines ──────────────────────────────────────────────────────
 (function(){
