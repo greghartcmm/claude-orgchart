@@ -1984,20 +1984,21 @@ function filterByState(k){const id=Object.keys(nodeState).find(i=>nodeState[i]==
 // SAVE / EXPORT / IMPORT
 // ─────────────────────────────────────────────────────────────────────────────
 function buildSnapshot(){
-  // Save the complete children order for every node — this captures:
-  //   sibling reordering (move left/right)
-  //   manager reassignments
-  //   additions and deletions
-  // On load we rebuild people+children entirely from this single source of truth.
+  // Bake the effective layout for every node into nodeLayout before saving,
+  // so that loading always restores exactly what was visible — regardless of
+  // any future changes to autoLayout rules.
+  const frozenLayout = {};
+  Object.keys(people).forEach(id => { frozenLayout[id] = getLayout(id); });
+
   const deletedIds = PEOPLE_DEF.map(p=>p.id).filter(id=>!people[id]);
   const allPeople  = Object.fromEntries(Object.entries(people).map(([id,p])=>[id,{...p}]));
   const allChildren= Object.fromEntries(Object.entries(children).map(([id,arr])=>[id,[...arr]]));
   return {
     version:5, savedAt:new Date().toISOString(),
-    nodeState, nodeLayout, collapsed, vSpacingScale, hSpacingScale, zoomLevel,
-    deletedIds,   // kept for reference / future use
-    allPeople,    // complete people map (base + custom + edits)
-    allChildren,  // complete children arrays with current order
+    nodeState, nodeLayout: frozenLayout, collapsed, vSpacingScale, hSpacingScale, zoomLevel,
+    deletedIds,
+    allPeople,
+    allChildren,
   };
 }
 function applySnapshot(s){
