@@ -486,6 +486,32 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
   border-radius: 6px; font-size: 13px; font-family: inherit; outline: none;
 }
 #leader-picker-search:focus { border-color: #219EBC; }
+#leader-picker-levels {
+  padding: 9px 16px 10px; border-bottom: 1px solid #eee;
+  display: flex; align-items: center; gap: 12px;
+  background: #fafbfc;
+}
+#lp-levels-label {
+  font-size: 11px; font-weight: 600; color: #555; flex: 1;
+}
+#lp-levels-label span { font-weight: 400; color: #888; }
+#lp-stepper { display: flex; align-items: center; }
+.lp-step-btn {
+  width: 26px; height: 26px; border: 1px solid #d0dce6; background: #fff;
+  color: #023047; font-size: 16px; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s; line-height: 1;
+}
+.lp-step-btn:first-child { border-radius: 6px 0 0 6px; }
+.lp-step-btn:last-child  { border-radius: 0 6px 6px 0; border-left: none; }
+.lp-step-btn:hover { background: #f0f7fb; }
+#lp-levels-val {
+  width: 42px; height: 26px; border: 1px solid #d0dce6;
+  border-left: none; border-right: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; color: #023047; background: #fff;
+  user-select: none;
+}
 #leader-picker-list {
   overflow-y: auto; flex: 1;
 }
@@ -926,6 +952,14 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
     </div>
     <div id="leader-picker-search-wrap">
       <input id="leader-picker-search" type="text" placeholder="Search by name or title…" oninput="filterLeaderPicker(this.value)">
+    </div>
+    <div id="leader-picker-levels">
+      <span id="lp-levels-label">Levels to include <span>— below selected leader</span></span>
+      <div id="lp-stepper">
+        <button class="lp-step-btn" onclick="lpStepLevels(-1)">−</button>
+        <div id="lp-levels-val">All</div>
+        <button class="lp-step-btn" onclick="lpStepLevels(1)">+</button>
+      </div>
     </div>
     <div id="leader-picker-list">
       <div id="leader-picker-loading">Parsing file…</div>
@@ -2503,9 +2537,14 @@ function loadWorkday(evt){
   reader.readAsArrayBuffer(file);
 }
 
-function buildOrgFromRoot(root, parsed, tempChildren, file, includeContingent=true){
-  function collectTree(id, set){ set.add(id); (tempChildren[id]||[]).forEach(c => collectTree(c, set)); return set; }
-  const treeIds = collectTree(root.id, new Set());
+function buildOrgFromRoot(root, parsed, tempChildren, file, includeContingent=true, levels=null){
+  function collectTree(id, set, depth){
+    set.add(id);
+    if(levels !== null && depth >= levels) return set;
+    (tempChildren[id]||[]).forEach(c => collectTree(c, set, depth+1));
+    return set;
+  }
+  const treeIds = collectTree(root.id, new Set(), 0);
   let filteredParsed = parsed.filter(p => treeIds.has(p.id));
 
   if(!includeContingent){
@@ -2527,8 +2566,9 @@ function buildOrgFromRoot(root, parsed, tempChildren, file, includeContingent=tr
   render();
   setTimeout(zoomFit, 120);
   const total = filteredParsed.length;
-  const excl  = !includeContingent ? ` (contingent workers excluded)` : '';
-  toast('✓ Loaded ' + total + ' people from ' + file.name + excl);
+  const lvlNote = levels !== null ? (', ' + levels + ' level' + (levels===1?'':'s')) : '';
+  const cNote   = !includeContingent ? ', contingent excluded' : '';
+  toast('✓ Loaded ' + total + ' people' + lvlNote + cNote);
 }
 
 // ── Help modal ───────────────────────────────────────────────────────────────
@@ -2930,9 +2970,29 @@ async function _parseMasterBuffer(arrayBuffer, file){
   renderLeaderRows(_lpFiltered);
 }
 
+let _lpLevels = null; // null = All
+
+function lpStepLevels(dir){
+  const MAX = 8;
+  if(_lpLevels === null){
+    if(dir < 0) _lpLevels = MAX;   // All → 8 → step down
+    else return;                    // All → can't go higher
+  } else {
+    _lpLevels = _lpLevels + dir;
+    if(_lpLevels >= MAX || _lpLevels < 1) _lpLevels = _lpLevels < 1 ? 1 : null;
+  }
+  const val = document.getElementById('lp-levels-val');
+  if(val) val.textContent = _lpLevels === null ? 'All' : _lpLevels;
+  // Style: dim the value when All
+  if(val) val.style.color = _lpLevels === null ? '#888' : '#023047';
+  if(val) val.style.fontWeight = _lpLevels === null ? '400' : '600';
+}
+
 function showLeaderPicker(){
+  _lpLevels = null; // reset to All each time
+  const val = document.getElementById('lp-levels-val');
+  if(val){ val.textContent = 'All'; val.style.color='#888'; val.style.fontWeight='400'; }
   document.getElementById('leader-picker-overlay').classList.add('open');
-  // Focus search after a tick so the modal is visible first
   setTimeout(() => {
     const s = document.getElementById('leader-picker-search');
     if(s) s.focus();
@@ -3011,9 +3071,8 @@ function selectLeader(id){
   const contingentCount = subtree.filter(isContingent).length;
 
   if(contingentCount === 0){
-    // No contingent workers — render immediately
     hideLeaderPicker();
-    buildOrgFromRoot(root, _lpParsed, _lpTempChildren, _lpFile);
+    buildOrgFromRoot(root, _lpParsed, _lpTempChildren, _lpFile, true, _lpLevels);
     return;
   }
 
@@ -3029,12 +3088,12 @@ function selectLeader(id){
         They can clutter the chart — you can always reload to change this.
       </div>
       <div style="display:flex;gap:10px;justify-content:center;">
-        <button onclick="hideLeaderPicker();buildOrgFromRoot(_lpParsed.find(p=>p.id==='${id}'),_lpParsed,_lpTempChildren,_lpFile,false)"
+        <button onclick="hideLeaderPicker();buildOrgFromRoot(_lpParsed.find(p=>p.id==='${id}'),_lpParsed,_lpTempChildren,_lpFile,false,_lpLevels)"
           style="background:#023047;color:#fff;border:none;padding:9px 20px;border-radius:7px;
                  font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
           Exclude (${contingentCount})
         </button>
-        <button onclick="hideLeaderPicker();buildOrgFromRoot(_lpParsed.find(p=>p.id==='${id}'),_lpParsed,_lpTempChildren,_lpFile,true)"
+        <button onclick="hideLeaderPicker();buildOrgFromRoot(_lpParsed.find(p=>p.id==='${id}'),_lpParsed,_lpTempChildren,_lpFile,true,_lpLevels)"
           style="background:#f0f4f8;color:#023047;border:1px solid #c8d8e4;padding:9px 20px;border-radius:7px;
                  font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
           Include all
