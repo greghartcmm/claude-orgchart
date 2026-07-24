@@ -2513,10 +2513,14 @@ function loadWorkday(evt){
   reader.readAsArrayBuffer(file);
 }
 
-function buildOrgFromRoot(root, parsed, tempChildren, file){
+function buildOrgFromRoot(root, parsed, tempChildren, file, includeContingent=true){
   function collectTree(id, set){ set.add(id); (tempChildren[id]||[]).forEach(c => collectTree(c, set)); return set; }
   const treeIds = collectTree(root.id, new Set());
-  const filteredParsed = parsed.filter(p => treeIds.has(p.id));
+  let filteredParsed = parsed.filter(p => treeIds.has(p.id));
+
+  if(!includeContingent){
+    filteredParsed = filteredParsed.filter(p => !isContingent(p));
+  }
 
   people={};children={};nodeState={};nodeLayout={};collapsed={};
   rootId = root.id;
@@ -2531,9 +2535,10 @@ function buildOrgFromRoot(root, parsed, tempChildren, file){
   dismissWelcome();
   hideRootPicker();
   render();
-  // Fit to screen after layout settles, capped at 40% minimum
   setTimeout(zoomFit, 120);
-  toast('✓ Loaded ' + filteredParsed.length + ' people from ' + file.name);
+  const total = filteredParsed.length;
+  const excl  = !includeContingent ? ` (contingent workers excluded)` : '';
+  toast('✓ Loaded ' + total + ' people from ' + file.name + excl);
 }
 
 // ── Help modal ───────────────────────────────────────────────────────────────
@@ -3003,11 +3008,49 @@ function filterLeaderPicker(query){
   renderLeaderRows(_lpFiltered);
 }
 
+function isContingent(p){ return /\(C\)/i.test(p.name); }
+
 function selectLeader(id){
   const root = _lpParsed.find(p => p.id === id);
   if(!root) return;
-  hideLeaderPicker();
-  buildOrgFromRoot(root, _lpParsed, _lpTempChildren, _lpFile);
+
+  // Collect subtree and check for contingent workers
+  function collectTree(id, set){ set.add(id); (_lpTempChildren[id]||[]).forEach(c => collectTree(c, set)); return set; }
+  const treeIds = collectTree(root.id, new Set());
+  const subtree = _lpParsed.filter(p => treeIds.has(p.id));
+  const contingentCount = subtree.filter(isContingent).length;
+
+  if(contingentCount === 0){
+    // No contingent workers — render immediately
+    hideLeaderPicker();
+    buildOrgFromRoot(root, _lpParsed, _lpTempChildren, _lpFile);
+    return;
+  }
+
+  // Show prompt inline in the picker list
+  document.getElementById('leader-picker-list').innerHTML = `
+    <div style="padding:28px 24px;text-align:center;">
+      <div style="font-size:22px;margin-bottom:10px;">👥</div>
+      <div style="font-size:13px;font-weight:600;color:#023047;margin-bottom:8px;">
+        Include contingent workers?
+      </div>
+      <div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:20px;">
+        This org has <b>${contingentCount} contingent worker${contingentCount===1?'':'s'}</b> (marked with <b>[C]</b>).<br>
+        They can clutter the chart — you can always reload to change this.
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button onclick="hideLeaderPicker();buildOrgFromRoot(_lpParsed.find(p=>p.id==='${id}'),_lpParsed,_lpTempChildren,_lpFile,false)"
+          style="background:#023047;color:#fff;border:none;padding:9px 20px;border-radius:7px;
+                 font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+          Exclude (${contingentCount})
+        </button>
+        <button onclick="hideLeaderPicker();buildOrgFromRoot(_lpParsed.find(p=>p.id==='${id}'),_lpParsed,_lpTempChildren,_lpFile,true)"
+          style="background:#f0f4f8;color:#023047;border:1px solid #c8d8e4;padding:9px 20px;border-radius:7px;
+                 font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+          Include all
+        </button>
+      </div>
+    </div>`;
 }
 
 function loadMasterWorkday(evt){
