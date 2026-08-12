@@ -628,6 +628,17 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
 .lp-row:hover { background: #f0f7fb; }
 .lp-name  { font-weight: 600; font-size: 13px; color: #023047; }
 .lp-title { font-size: 11px; color: #666; margin-top: 2px; }
+.lp-dept-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: #eaf2f8;
+  color: #219EBC;
+  font-size: 10px;
+  font-weight: 600;
+  vertical-align: middle;
+}
 .lp-meta  { font-size: 11px; color: #888; white-space: nowrap; text-align: right; margin-left: 12px; }
 .lp-meta-count { font-weight: 600; color: #023047; }
 
@@ -1305,9 +1316,13 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONFIG
 // ─────────────────────────────────────────────────────────────────────────────
-// URL to the master org XLSX stored in the repo.
-// Update this path if the file moves or the repo URL changes.
-const MASTER_ORG_URL = './Chrysanthi Hand Department.xlsx';
+// Master org XLSX files stored in the repo — each is a separate department
+// export. All are fetched and merged into one combined leader-picker dataset.
+// Add a new department here (label + repo-relative URL) to include it.
+const MASTER_ORG_FILES = [
+  { label: 'Chrysanthi Hand', url: './Chrysanthi Hand Department.xlsx' },
+  { label: 'Nasir Ahmed',     url: './Nasir Ahmed Department.xlsx' },
+];
 
 const NODE_W   = 175;   // node width  (must match CSS)
 const NODE_H   = 64;    // matches fixed CSS height (60px) + 2px border top + 2px border bottom
@@ -3265,7 +3280,7 @@ let _lpFile         = null;  // File reference for toast
 let _lpLeaders      = [];    // sorted leader list shown in modal
 let _lpFiltered     = [];    // currently filtered subset
 
-// ── Load master org from repo URL ─────────────────────────────────────────────
+// ── Load master org from repo URLs (one fetch per department, merged) ────────
 async function loadMasterFromRepo(){
   dismissWelcome();
   document.getElementById('leader-picker-list').innerHTML =
@@ -3274,52 +3289,83 @@ async function loadMasterFromRepo(){
   showLeaderPicker();
 
   try {
-    const resp = await fetch(MASTER_ORG_URL);
-    if(!resp.ok) throw new Error('fetch_failed');
-    const buffer = await resp.arrayBuffer();
-    const fakeFile = { name: 'Chrysanthi Hand Department.xlsx' };
-    await _parseMasterBuffer(buffer, fakeFile);
+    const buffers = await Promise.all(MASTER_ORG_FILES.map(async f => {
+      const resp = await fetch(f.url);
+      if(!resp.ok) throw new Error('fetch_failed');
+      return { label: f.label, buffer: await resp.arrayBuffer() };
+    }));
+    await _parseMasterBuffers(buffers);
   } catch(err){
-    // Running offline (file://) or file not in repo yet — fall back to file picker
-    document.getElementById('leader-picker-list').innerHTML = `
-      <div style="padding:28px 24px;text-align:center;">
-        <div style="font-size:22px;margin-bottom:10px;">📂</div>
-        <div style="font-size:13px;font-weight:600;color:#023047;margin-bottom:6px;">Running offline?</div>
-        <div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:18px;">
-          The org data file couldn't be loaded automatically.<br>
-          Select <b>Chrysanthi Hand Department.xlsx</b> from your computer.
-        </div>
-        <button onclick="document.getElementById('master-fallback-in').click()"
-          style="background:#023047;color:#fff;border:none;padding:9px 20px;border-radius:7px;
-                 font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
-          Select file…
-        </button>
-        <input type="file" id="master-fallback-in" accept=".xlsx,.xls" style="display:none"
-               onchange="loadMasterWorkday(event)">
-      </div>`;
+    // Running offline (file://) or a file isn't in the repo yet —
+    // fall back to prompting for each department file in turn.
+    _lpFallbackBuffers = [];
+    _startMasterFallback(0);
   }
 }
 
-// Shared parse logic extracted from loadMasterWorkday so both paths use it
-async function _parseMasterBuffer(arrayBuffer, file){
-  const { rows, format } = await parseXLSX(arrayBuffer);
-  let parsed = [];
-  const nameToId = {};
+// Prompt for each MASTER_ORG_FILES entry in sequence, then merge once all are in.
+let _lpFallbackBuffers = [];
+function _startMasterFallback(index){
+  if(index >= MASTER_ORG_FILES.length){
+    _parseMasterBuffers(_lpFallbackBuffers).catch(err => {
+      document.getElementById('leader-picker-list').innerHTML =
+        `<div style="padding:24px;text-align:center;color:#c0392b;font-size:13px;">⚠ ${err.message}</div>`;
+    });
+    return;
+  }
+  const f = MASTER_ORG_FILES[index];
+  const stepNote = MASTER_ORG_FILES.length > 1 ? ` (file ${index+1} of ${MASTER_ORG_FILES.length})` : '';
+  document.getElementById('leader-picker-list').innerHTML = `
+    <div style="padding:28px 24px;text-align:center;">
+      <div style="font-size:22px;margin-bottom:10px;">📂</div>
+      <div style="font-size:13px;font-weight:600;color:#023047;margin-bottom:6px;">Running offline?</div>
+      <div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:18px;">
+        The org data files couldn't be loaded automatically.<br>
+        Select <b>${f.label} Department.xlsx</b> from your computer${stepNote}.
+      </div>
+      <button onclick="document.getElementById('master-fallback-in').click()"
+        style="background:#023047;color:#fff;border:none;padding:9px 20px;border-radius:7px;
+               font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+        Select file…
+      </button>
+      <input type="file" id="master-fallback-in" accept=".xlsx,.xls" style="display:none"
+             onchange="_handleMasterFallbackFile(event)">
+    </div>`;
+}
+function _handleMasterFallbackFile(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  evt.target.value = '';
+  const index = _lpFallbackBuffers.length;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _lpFallbackBuffers.push({ label: MASTER_ORG_FILES[index].label, buffer: e.target.result });
+    _startMasterFallback(index + 1);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Parse one file's rows into people with globally-unique ids (idPrefix keeps
+// ids from colliding when multiple files are merged) and an optional dept tag.
+function _rowsToPeople(rows, format, idPrefix, dept){
+  let people = [];
 
   if(format === 'myteam'){
+    const nameToId = {};
     rows.forEach((r, i) => {
-      const name = flipName(r.name), title = r.title, mgr = flipName(r.mgr), id = 'wd_' + i;
+      const name = flipName(r.name), title = r.title, mgr = flipName(r.mgr), id = idPrefix + i;
       if(name) nameToId[name] = id;
-      parsed.push({ id, name, title, mgrName: mgr, managerId: null });
+      people.push({ id, name, title, mgrName: mgr, managerId: null, dept });
     });
-    parsed = parsed.filter(p => p.name);
+    people = people.filter(p => p.name);
+    people.forEach(p => { p.managerId = nameToId[p.mgrName] || null; });
   } else if(format === 'dept'){
     const idMap = {}, rawParsed = [];
     rows.forEach((r, i) => {
       const uid = (r.uid||'').trim(), name = (r.name||'').trim(),
-            title = (r.title||'').trim(), reportsTo = (r.mgrUid||'').trim(), id = 'wd_' + i;
+            title = (r.title||'').trim(), reportsTo = (r.mgrUid||'').trim(), id = idPrefix + i;
       if(uid) idMap[uid] = id;
-      rawParsed.push({ id, uid, name, title, _reportsToUid: reportsTo, managerId: null });
+      rawParsed.push({ id, uid, name, title, _reportsToUid: reportsTo, managerId: null, dept });
     });
     rawParsed.forEach(p => { if(p._reportsToUid && idMap[p._reportsToUid]) p.managerId = idMap[p._reportsToUid]; });
     const seenNames = new Set();
@@ -3327,24 +3373,48 @@ async function _parseMasterBuffer(arrayBuffer, file){
       if(!p.name) return;
       const mgr = rawParsed.find(r => r.id === p.managerId);
       if(!(seenNames.has(p.name) && mgr && mgr.name === p.name)){
-        seenNames.add(p.name); parsed.push(p); if(p.name) nameToId[p.name] = p.id;
+        seenNames.add(p.name); people.push(p);
       }
     });
   }
 
+  return people;
+}
+
+function _finishMasterParse(parsed, fileLabel){
   const tempChildren = {};
   parsed.forEach(p => { tempChildren[p.id] = []; });
   parsed.forEach(p => {
-    if(format === 'myteam') p.managerId = nameToId[p.mgrName] || null;
     if(p.managerId && tempChildren[p.managerId]) tempChildren[p.managerId].push(p.id);
   });
 
-  _lpParsed = parsed; _lpTempChildren = tempChildren; _lpFile = file;
+  _lpParsed = parsed; _lpTempChildren = tempChildren; _lpFile = { name: fileLabel };
   _lpLeaders = buildLeaderList(parsed, tempChildren);
   _lpFiltered = _lpLeaders.slice();
 
-  if(!_lpLeaders.length) throw new Error('No people with direct reports found in this file.');
+  if(!_lpLeaders.length) throw new Error('No people with direct reports found.');
   renderLeaderRows(_lpFiltered);
+}
+
+// Single-file parse — used by the manual "upload your own full org export" flow.
+async function _parseMasterBuffer(arrayBuffer, file){
+  const { rows, format } = await parseXLSX(arrayBuffer);
+  const parsed = _rowsToPeople(rows, format, 'wd_', null);
+  _finishMasterParse(parsed, file.name);
+}
+
+// Multi-file parse — merges every repo master org file into one dataset.
+// Each file gets its own id namespace (wd_<fileIndex>_<row>) so ids never
+// collide, and a dept tag so the leader picker can show which file a
+// person came from once there's more than one.
+async function _parseMasterBuffers(buffers){
+  let parsed = [];
+  for(let fi = 0; fi < buffers.length; fi++){
+    const { label, buffer } = buffers[fi];
+    const { rows, format } = await parseXLSX(buffer);
+    parsed = parsed.concat(_rowsToPeople(rows, format, 'wd_' + fi + '_', buffers.length > 1 ? label : null));
+  }
+  _finishMasterParse(parsed, buffers.map(b => b.label).join(' + '));
 }
 
 let _lpLevels = null; // null = All
@@ -3396,6 +3466,7 @@ function buildLeaderList(parsed, tempChildren){
       id:      p.id,
       name:    p.name,
       title:   p.title || '',
+      dept:    p.dept || '',
       directs: (tempChildren[p.id]||[]).length,
       total:   countDesc(p.id) + 1,  // include self
     }))
@@ -3418,7 +3489,7 @@ function renderLeaderRows(leaders){
     <div class="lp-row" onclick="selectLeader('${l.id}')">
       <div>
         <div class="lp-name">${l.name}</div>
-        <div class="lp-title">${l.title}</div>
+        <div class="lp-title">${l.title}${l.dept ? `<span class="lp-dept-tag">${l.dept}</span>` : ''}</div>
       </div>
       <div class="lp-meta">
         <span class="lp-meta-count">${l.total}</span> in org<br>
@@ -3430,7 +3501,7 @@ function renderLeaderRows(leaders){
 function filterLeaderPicker(query){
   const q = query.toLowerCase().trim();
   _lpFiltered = q
-    ? _lpLeaders.filter(l => l.name.toLowerCase().includes(q) || l.title.toLowerCase().includes(q))
+    ? _lpLeaders.filter(l => l.name.toLowerCase().includes(q) || l.title.toLowerCase().includes(q) || l.dept.toLowerCase().includes(q))
     : _lpLeaders.slice();
   renderLeaderRows(_lpFiltered);
 }
