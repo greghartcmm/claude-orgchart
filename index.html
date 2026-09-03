@@ -1,0 +1,3852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Org Chart Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'IBM Plex Sans', sans-serif; background: #ffffff; overflow: hidden; }
+
+/* ── Header ── */
+#header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+  background: #023047; color: #fff;
+  padding: 0 18px; height: 48px;
+  display: flex; align-items: center; gap: 7px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.3);
+}
+#header-wordmark { display: flex; align-items: center; gap: 9px; flex-shrink: 0; margin-right: 2px; border-radius: 6px; padding: 4px 8px; margin-left: -8px; transition: background .15s; }
+#header-wordmark:hover { background: rgba(255,255,255,.1); }
+#header-logomark {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 3px; width: 20px; height: 20px; flex-shrink: 0;
+}
+#header-logomark span { display: block; border-radius: 1.5px; background: #8ECAE6; }
+#header-logomark span.dim { opacity: .28; }
+#header h1 { font-size: 14px; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
+#header-sub { font-size: 10px; color: rgba(142,202,230,.72); margin-top: 2px; font-weight: 500; transition: opacity .5s ease; }
+.hdr-div { width: 1px; height: 20px; background: rgba(255,255,255,.18); flex-shrink: 0; }
+#header-spacer { flex: 1; }
+#search {
+  padding: 5px 10px; border-radius: 6px; border: none;
+  font-size: 12px; width: 155px; flex-shrink: 0;
+  background: rgba(255,255,255,.12); color: #fff; outline: none; font-family: inherit;
+}
+#search::placeholder { color: rgba(255,255,255,.38); }
+.hbtn {
+  background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; padding: 0 11px; border-radius: 6px;
+  cursor: pointer; font-size: 11px; font-family: inherit;
+  white-space: nowrap; height: 28px;
+  display: inline-flex; align-items: center; gap: 5px;
+  flex-shrink: 0; transition: background .12s;
+}
+.hbtn:hover, .hbtn.dd-open { background: rgba(255,255,255,.22); }
+.hbtn-icon {
+  background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; border-radius: 6px; cursor: pointer; font-size: 13px;
+  font-family: inherit; width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background .12s;
+}
+.hbtn-icon:hover, .hbtn-icon.dd-open { background: rgba(255,255,255,.22); }
+.hbtn-analyze {
+  background: rgba(142,202,230,.15); border: 1px solid rgba(142,202,230,.5);
+  color: #8ECAE6; padding: 0 11px; border-radius: 6px;
+  cursor: pointer; font-size: 11px; font-family: inherit; font-weight: 600;
+  white-space: nowrap; height: 28px;
+  display: inline-flex; align-items: center; gap: 5px;
+  flex-shrink: 0; transition: background .12s, border-color .12s;
+}
+.hbtn-analyze:hover { background: rgba(142,202,230,.28); border-color: rgba(142,202,230,.8); }
+#zoom-control {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 6px; padding: 0 6px; height: 28px; flex-shrink: 0;
+}
+#zoom-control button {
+  background: none; border: none; color: #fff;
+  width: 18px; height: 18px; border-radius: 3px;
+  cursor: pointer; font-size: 14px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit; padding: 0; transition: background .12s;
+}
+#zoom-control button:hover { background: rgba(255,255,255,.18); }
+#zoom-val { font-size: 11px; min-width: 30px; text-align: center; }
+#zoom-fit { font-size: 10.5px !important; width: auto !important; padding: 0 6px !important; }
+.hdr-dd { position: relative; display: inline-flex; flex-shrink: 0; }
+.hdr-dd-panel {
+  display: none; position: fixed; top: 52px;
+  background: #fff; border-radius: 9px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.07);
+  min-width: 210px; z-index: 400; overflow: hidden;
+}
+.hdr-dd-panel.open { display: block; }
+.ddp-section {
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: #aaa; padding: 8px 14px 3px;
+}
+.ddp-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 9px 14px; font-size: 12px; color: #1a2a35;
+  cursor: pointer; border-bottom: 1px solid #f3f5f7;
+  background: none; border-left: none; border-right: none; border-top: none;
+  width: 100%; text-align: left; font-family: inherit;
+}
+.ddp-item:last-child { border-bottom: none; }
+.ddp-item:hover { background: #f0f7fb; }
+.ddp-icon { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+.ddp-name { font-weight: 600; line-height: 1.3; }
+.ddp-desc { font-size: 10.5px; color: #888; margin-top: 2px; line-height: 1.3; }
+.ddp-hr { border: none; border-top: 1px solid #eaedf0; margin: 3px 0; }
+#view-panel { min-width: 220px; padding: 14px 16px; }
+#view-panel .ddp-section { padding: 0 0 8px 0; }
+.vp-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.vp-row:last-of-type { margin-bottom: 0; }
+.vp-key { font-size: 11px; font-weight: 600; color: #555; width: 64px; flex-shrink: 0; }
+.vp-range {
+  flex: 1; -webkit-appearance: none; appearance: none;
+  height: 3px; border-radius: 2px; background: #d0dce6; outline: none; cursor: pointer;
+}
+.vp-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 12px; height: 12px; border-radius: 50%; background: #023047; cursor: pointer;
+}
+.vp-val { font-size: 11px; color: #888; width: 30px; text-align: right; }
+.vp-hr { border: none; border-top: 1px solid #eaedf0; margin: 11px 0; }
+.vp-action {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: #1a2a35; padding: 5px 0; cursor: pointer;
+  background: none; border: none; font-family: inherit; width: 100%; text-align: left;
+}
+.vp-action:hover { color: #023047; }
+
+/* ── Sub-bars ── */
+.subbar { position: fixed; left: 0; right: 0; z-index: 200; background: #fff; border-bottom: 1px solid #dde3ea; }
+#legend { padding: 7px 18px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+#legend .lbl { font-size: 10px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: .05em; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #333; cursor: pointer; }
+.legend-swatch { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; flex-shrink: 0; }
+#legend-hint { margin-left: auto; font-size: 10px; color: #aaa; }
+#search-results { display: none; padding: 6px 18px; flex-wrap: wrap; gap: 6px; }
+.sr-tag { background: #e8f0fe; border-radius: 4px; padding: 3px 9px; font-size: 11px; color: #023047; cursor: pointer; }
+.sr-tag:hover { background: #d0e4ff; }
+
+/* ── Scroll canvas ── */
+#canvas-wrap {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  overflow: scroll; cursor: grab; background: #ffffff;
+}
+#canvas-wrap:active { cursor: grabbing; }
+#canvas { position: relative; transform-origin: top left; } /* sized by JS to fit tree */
+
+/* ── SVG behind nodes ── */
+#connector-svg { position: absolute; top: 0; left: 0; pointer-events: none; }
+
+/* ── Node boxes — absolutely positioned by layout engine ── */
+.node {
+  position: absolute;
+  border-radius: 0; border: 2px solid #023047;
+  background: #fff; color: #023047;
+  padding: 8px 28px 8px 11px;
+  width: 175px;
+  height: 60px;
+  display: flex; flex-direction: column; justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,.1);
+  user-select: none;
+  transition: box-shadow .15s, transform .1s;
+}
+.node:hover { box-shadow: 0 4px 14px rgba(0,0,0,.2); transform: translateY(-1px); }
+.node.highlighted { outline: 3px solid #FFB703; outline-offset: 2px; }
+.node-name  { font-weight: 700; font-size: 12px; line-height: 1.3; }
+.node-title { font-size: 10px; opacity: .72; margin-top: 3px; line-height: 1.3; }
+.layout-btn {
+  position: absolute; top: 5px; right: 6px;
+  background: transparent; border: none; font-size: 11px;
+  cursor: pointer; opacity: 0; padding: 0; color: inherit; line-height: 1;
+  transition: opacity .15s; pointer-events: none;
+}
+.node:hover .layout-btn { opacity: .7; pointer-events: auto; }
+.layout-btn:hover { opacity: 1 !important; }
+
+/* ── Context menu ── */
+#ctx-menu {
+  position: fixed; background: #fff; border: 1px solid #dde; border-radius: 9px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.18); z-index: 500; min-width: 215px;
+  display: none; overflow: hidden;
+}
+#ctx-menu.open { display: block; }
+.ctx-sec  { font-size: 9.5px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .06em; padding: 7px 12px 3px; }
+.ctx-item { display: flex; align-items: center; gap: 8px; padding: 5px 12px; cursor: pointer; font-size: 12px; color: #222; }
+.ctx-item:hover { background: #f5f7ff; }
+.ctx-swatch { width: 13px; height: 13px; border-radius: 3px; border: 2px solid; flex-shrink: 0; }
+.ctx-hr  { border: none; border-top: 1px solid #eee; margin: 4px 0; }
+.ctx-act { padding: 5px 12px; cursor: pointer; font-size: 12px; color: #023047; display: flex; align-items: center; gap: 6px; }
+.ctx-act:hover { background: #f5f7ff; }
+.ctx-act.danger { color: #c0392b; }
+
+/* ── Modal ── */
+#modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.45); z-index: 900; align-items: center; justify-content: center;
+}
+#modal-overlay.open { display: flex; }
+#modal { background: #fff; border-radius: 11px; padding: 24px; min-width: 310px; max-width: 380px; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+#modal h2 { font-size: 15px; font-weight: 700; color: #023047; margin-bottom: 14px; }
+.mlabel { display: block; font-size: 11px; font-weight: 600; color: #666; margin-top: 10px; margin-bottom: 3px; }
+.minput { width: 100%; padding: 7px 10px; border-radius: 5px; border: 1px solid #dde; font-size: 13px; font-family: inherit; outline: none; background: #fff; }
+.minput:focus { border-color: #219EBC; }
+.mbtns { display: flex; gap: 8px; margin-top: 14px; }
+.btn-p { background: #023047; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; }
+.btn-s { background: #f0f0f0; color: #333; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; font-family: inherit; }
+#move-list { max-height: 230px; overflow-y: auto; border: 1px solid #dde; border-radius: 5px; margin-top: 6px; }
+.move-opt { padding: 7px 11px; cursor: pointer; font-size: 12px; border-bottom: 1px solid #f0f0f0; }
+.move-opt:last-child { border-bottom: none; }
+.move-opt:hover { background: #f0f6ff; }
+.move-opt.selected { background: #dbeafe; }
+.move-opt-name  { font-weight: 600; color: #023047; }
+.move-opt-title { font-size: 10px; color: #888; margin-top: 1px; }
+
+/* ── Welcome screen — Split Panel ── */
+#welcome-overlay {
+  display: none; position: fixed; inset: 0; z-index: 800;
+  background: #f0f4f8;
+  align-items: center; justify-content: center;
+}
+#welcome-overlay.show { display: flex; }
+
+#welcome-panel {
+  display: flex;
+  width: min(820px, 96vw);
+  min-height: min(520px, 90vh);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 16px 56px rgba(2,48,71,.18), 0 2px 8px rgba(2,48,71,.08);
+}
+
+/* Left brand panel */
+#welcome-left {
+  width: 260px; flex-shrink: 0;
+  background: #023047;
+  padding: 44px 36px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+#welcome-left-top {}
+#welcome-logomark {
+  width: 44px; height: 44px;
+  border: 1.5px solid rgba(142,202,230,.35);
+  border-radius: 10px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 5px; padding: 10px;
+  margin-bottom: 28px;
+}
+#welcome-logomark span {
+  display: block; border-radius: 2px;
+  background: #8ECAE6;
+}
+#welcome-logomark span.dim { opacity: .3; }
+#welcome-tagline {
+  font-size: 24px; font-weight: 700; color: #fff;
+  letter-spacing: -.03em; line-height: 1.15; margin-bottom: 12px;
+}
+#welcome-tagline em {
+  font-style: normal; color: #8ECAE6;
+}
+#welcome-sub {
+  font-size: 14px; color: rgba(142,202,230,.72);
+  line-height: 1.5; margin-top: 14px;
+}
+#welcome-left-foot {
+  font-size: 10px; color: rgba(255,255,255,.22);
+  letter-spacing: .02em;
+}
+
+/* Right action panel */
+#welcome-right {
+  flex: 1;
+  background: #fff;
+  padding: 44px 40px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+#welcome-right-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: #8ECAE6; margin-bottom: 18px;
+}
+
+/* Workday drill-in (hidden by default) */
+#wd-drilldown { display: none; }
+#wd-drilldown.open { display: block; }
+#welcome-options { }
+#welcome-options.hidden { display: none; }
+
+.w-back-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: none; border: 1px solid #d0dce6; color: #555;
+  border-radius: 6px; padding: 4px 11px; font-size: 11px;
+  cursor: pointer; font-family: inherit; margin-bottom: 18px;
+  transition: border-color .15s, color .15s;
+}
+.w-back-btn:hover { border-color: #023047; color: #023047; }
+
+#wd-drilldown h3 {
+  font-size: 14px; font-weight: 700; color: #023047; margin-bottom: 16px;
+}
+.wd-step {
+  display: flex; gap: 11px; margin-bottom: 12px; align-items: flex-start;
+}
+.wd-step-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #023047; color: #fff;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.wd-step-text { font-size: 12px; color: #444; line-height: 1.65; }
+.wd-step-text b { color: #023047; }
+.wd-pill {
+  display: inline-block; background: #E6F3FB; color: #023047;
+  border-radius: 4px; padding: 1px 7px;
+  font-size: 11px; font-weight: 600;
+}
+.wd-upload-zone {
+  border: 2px dashed #c8d8e4; border-radius: 10px;
+  padding: 20px 16px; text-align: center; cursor: pointer;
+  margin-top: 16px; transition: border-color .15s, background .15s;
+}
+.wd-upload-zone:hover { border-color: #219EBC; background: #f5fbff; }
+.wd-upload-zone-icon { font-size: 24px; margin-bottom: 6px; }
+.wd-upload-zone-label { font-size: 13px; font-weight: 600; color: #023047; margin-bottom: 2px; }
+.wd-upload-zone-sub { font-size: 11px; color: #888; }
+
+/* Action option cards */
+.w-option {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; border-radius: 10px;
+  cursor: pointer; border: 1.5px solid #eaeff4;
+  background: #fff; width: 100%; text-align: left;
+  font-family: inherit; margin-bottom: 9px;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.w-option:last-of-type { margin-bottom: 0; }
+.w-option:hover {
+  border-color: #8ECAE6;
+  box-shadow: 0 2px 12px rgba(33,158,188,.1);
+  background: #fafeff;
+}
+.w-option-icon {
+  width: 38px; height: 38px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+}
+.w-opt-a .w-option-icon { background: #E6F3FB; }
+.w-opt-b .w-option-icon { background: #EDF9F0; }
+.w-opt-c .w-option-icon { background: #f4f4f6; }
+.w-option-body { flex: 1; }
+.w-option-name { font-size: 13px; font-weight: 600; color: #023047; margin-bottom: 2px; }
+.w-option-desc { font-size: 11px; color: #7a8fa0; line-height: 1.45; }
+.w-option-arrow { font-size: 13px; color: #c8d8e4; flex-shrink: 0; }
+.w-option:hover .w-option-arrow { color: #8ECAE6; }
+
+.w-divider {
+  display: flex; align-items: center; gap: 10px;
+  color: #b8c8d4; font-size: 9.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em; margin: 14px 0 10px;
+}
+.w-divider::before, .w-divider::after {
+  content:''; flex:1; height:1px; background:#eef0f3;
+}
+
+#welcome-error { color: #c0392b; font-size: 12px; margin-top: 10px; display: none; }
+
+#welcome-foot {
+  margin-top: 18px; padding-top: 14px;
+  border-top: 1px solid #f0f4f8;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.w-foot-link {
+  font-size: 11px; color: #b0bcc8; cursor: pointer;
+  background: none; border: none; font-family: inherit;
+  transition: color .15s; padding: 0;
+}
+.w-foot-link:hover { color: #023047; }
+
+/* Mobile: stack panels vertically */
+@media (max-width: 600px) {
+  #welcome-panel {
+    flex-direction: column;
+    width: 96vw;
+    min-height: unset;
+    border-radius: 12px;
+  }
+  #welcome-left {
+    width: 100%; padding: 28px 24px 24px;
+    flex-direction: row; align-items: center; gap: 16px;
+    justify-content: flex-start;
+  }
+  #welcome-logomark { margin-bottom: 0; flex-shrink: 0; }
+  #welcome-tagline { font-size: 18px; margin-bottom: 2px; }
+  #welcome-sub { display: none; }
+  #welcome-left-foot { display: none; }
+  #welcome-left-top { display: flex; align-items: center; gap: 14px; }
+  #welcome-right { padding: 24px 20px 28px; }
+  #welcome-right-label { margin-bottom: 14px; }
+}
+
+/* ── Add-person (+) hover button on nodes ── */
+.add-btn {
+  position: absolute; bottom: 3px; right: 4px;
+  background: transparent; border: none; font-size: 13px;
+  cursor: pointer; opacity: 0; padding: 0; line-height: 1; color: inherit;
+  transition: opacity .15s; pointer-events: none;
+}
+.node:hover .add-btn { opacity: .6; pointer-events: auto; }
+.add-btn:hover { opacity: 1 !important; }
+
+/* ── Help modal ── */
+#help-overlay {
+  display: none; position: fixed; inset: 0; z-index: 850;
+  background: rgba(0,0,0,.5);
+  align-items: center; justify-content: center;
+}
+#help-overlay.open { display: flex; }
+#help-box {
+  background: #fff; border-radius: 14px;
+  width: min(680px, 92vw); max-height: 82vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 48px rgba(0,0,0,.22);
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+#help-box-header {
+  position: sticky; top: 0; background: #023047; color: #fff;
+  padding: 16px 24px; border-radius: 14px 14px 0 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+#help-box-header h2 { font-size: 16px; font-weight: 700; }
+#help-close {
+  background: rgba(255,255,255,.15); border: none; color: #fff;
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  font-family: inherit;
+}
+#help-close:hover { background: rgba(255,255,255,.28); }
+
+/* ── Analyze modal ── */
+#analyze-overlay {
+  display: none; position: fixed; inset: 0; z-index: 850;
+  background: rgba(0,0,0,.5);
+  align-items: center; justify-content: center;
+}
+#analyze-overlay.open { display: flex; }
+#analyze-box {
+  background: #fff; border-radius: 14px;
+  width: min(620px, 92vw);
+  box-shadow: 0 12px 48px rgba(0,0,0,.22);
+  font-family: 'IBM Plex Sans', sans-serif;
+  display: flex; flex-direction: column;
+  max-height: 88vh;
+}
+#analyze-header {
+  background: #023047; color: #fff;
+  padding: 15px 20px; border-radius: 14px 14px 0 0;
+  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+}
+#analyze-header-left { display: flex; align-items: center; gap: 10px; }
+#analyze-header h2 { font-size: 15px; font-weight: 700; }
+#analyze-header-sub { font-size: 10.5px; color: rgba(142,202,230,.75); margin-top: 2px; }
+#analyze-close {
+  background: rgba(255,255,255,.15); border: none; color: #fff;
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  font-family: inherit; flex-shrink: 0;
+}
+#analyze-close:hover { background: rgba(255,255,255,.28); }
+#analyze-body { padding: 20px 22px; overflow-y: auto; flex: 1; }
+.az-steps {
+  display: flex; gap: 10px; margin-bottom: 18px;
+}
+.az-step {
+  flex: 1; background: #f4f8fb; border-radius: 8px;
+  padding: 11px 13px; border: 1px solid #dde8f0;
+}
+.az-step-num {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #023047; color: #fff;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 7px;
+}
+.az-step-head { font-size: 11px; font-weight: 700; color: #023047; margin-bottom: 3px; }
+.az-step-desc { font-size: 10.5px; color: #666; line-height: 1.5; }
+.az-covers-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: #888; margin-bottom: 8px;
+}
+.az-covers {
+  display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 16px;
+}
+.az-pill {
+  background: #E6F3FB; color: #023047;
+  font-size: 10.5px; font-weight: 600;
+  padding: 3px 9px; border-radius: 20px;
+}
+.az-textarea-wrap { position: relative; }
+#analyze-textarea {
+  width: 100%; height: 160px; resize: none;
+  border: 1px solid #dde3ea; border-radius: 7px;
+  padding: 10px 12px; font-size: 11px; font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  color: #334; line-height: 1.5; outline: none; background: #fafbfc;
+}
+#analyze-textarea:focus { border-color: #8ECAE6; }
+#analyze-footer {
+  padding: 14px 22px 18px; border-top: 1px solid #eaedf0;
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+#analyze-copy-btn {
+  background: #023047; color: #fff; border: none;
+  padding: 0 18px; height: 34px; border-radius: 7px;
+  font-size: 12px; font-weight: 700; font-family: inherit;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0; transition: background .12s;
+}
+#analyze-copy-btn:hover { background: #01344f; }
+#analyze-copy-btn.copied { background: #1a6b63; }
+#analyze-open-btn {
+  background: none; border: 1px solid #dde3ea; color: #444;
+  padding: 0 14px; height: 34px; border-radius: 7px;
+  font-size: 12px; font-family: inherit; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  flex-shrink: 0; transition: border-color .12s;
+  text-decoration: none;
+}
+#analyze-open-btn:hover { border-color: #8ECAE6; color: #023047; }
+#analyze-footer-note { font-size: 10.5px; color: #aaa; line-height: 1.4; }
+#help-body { padding: 24px 28px 28px; }
+.help-section { margin-bottom: 24px; }
+.help-section:last-child { margin-bottom: 0; }
+.help-section h3 {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: #023047;
+  border-bottom: 2px solid #E6F3FB; padding-bottom: 6px; margin-bottom: 12px;
+}
+.help-row {
+  display: flex; gap: 12px; margin-bottom: 9px; align-items: flex-start;
+}
+.help-row:last-child { margin-bottom: 0; }
+.help-tag {
+  flex-shrink: 0; font-size: 11px; font-weight: 600;
+  background: #f0f4f8; color: #023047; border: 1px solid #d0dce6;
+  border-radius: 4px; padding: 2px 8px; margin-top: 1px;
+  white-space: nowrap;
+}
+.help-desc { font-size: 12px; color: #444; line-height: 1.6; }
+.help-desc b { color: #023047; }
+.help-note {
+  background: #FFF2EB; border-left: 3px solid #B85C00;
+  border-radius: 0 6px 6px 0; padding: 9px 13px;
+  font-size: 12px; color: #5a2c00; line-height: 1.6; margin-top: 14px;
+}
+
+/* ── Leader-picker modal ── */
+#leader-picker-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.48); z-index: 950;
+  align-items: center; justify-content: center;
+}
+#leader-picker-overlay.open { display: flex; }
+#leader-picker-box {
+  background: #fff; border-radius: 13px;
+  width: min(520px, 92vw); max-height: 80vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 12px 48px rgba(0,0,0,.25);
+  overflow: hidden;
+}
+#leader-picker-header {
+  background: #023047; color: #fff;
+  padding: 16px 20px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-shrink: 0;
+}
+#leader-picker-header h2 { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+#leader-picker-header p  { font-size: 11px; opacity: .65; }
+#leader-picker-close {
+  background: rgba(255,255,255,.15); border: none; color: #fff;
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  font-family: inherit; flex-shrink: 0; margin-left: 12px;
+}
+#leader-picker-close:hover { background: rgba(255,255,255,.28); }
+#leader-picker-search-wrap {
+  padding: 12px 16px; border-bottom: 1px solid #eee; flex-shrink: 0;
+}
+#leader-picker-search {
+  width: 100%; padding: 8px 11px; border: 1px solid #dde;
+  border-radius: 6px; font-size: 13px; font-family: inherit; outline: none;
+}
+#leader-picker-search:focus { border-color: #219EBC; }
+#leader-picker-levels {
+  padding: 9px 16px 10px; border-bottom: 1px solid #eee;
+  display: flex; align-items: center; gap: 12px;
+  background: #fafbfc;
+}
+#lp-levels-label {
+  font-size: 11px; font-weight: 600; color: #555; flex: 1;
+}
+#lp-levels-label span { font-weight: 400; color: #888; }
+#lp-stepper { display: flex; align-items: center; }
+.lp-step-btn {
+  width: 26px; height: 26px; border: 1px solid #d0dce6; background: #fff;
+  color: #023047; font-size: 16px; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .12s; line-height: 1;
+}
+.lp-step-btn:first-child { border-radius: 6px 0 0 6px; }
+.lp-step-btn:last-child  { border-radius: 0 6px 6px 0; border-left: none; }
+.lp-step-btn:hover { background: #f0f7fb; }
+#lp-levels-val {
+  width: 42px; height: 26px; border: 1px solid #d0dce6;
+  border-left: none; border-right: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; color: #023047; background: #fff;
+  user-select: none;
+}
+#leader-picker-list {
+  overflow-y: auto; flex: 1;
+}
+#leader-picker-loading {
+  padding: 32px; text-align: center; font-size: 13px; color: #888;
+}
+.lp-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; cursor: pointer; border-bottom: 1px solid #f0f0f0;
+  transition: background .1s;
+}
+.lp-row:last-child { border-bottom: none; }
+.lp-row:hover { background: #f0f7fb; }
+.lp-name  { font-weight: 600; font-size: 13px; color: #023047; }
+.lp-title { font-size: 11px; color: #666; margin-top: 2px; }
+.lp-dept-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: #eaf2f8;
+  color: #219EBC;
+  font-size: 10px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.lp-meta  { font-size: 11px; color: #888; white-space: nowrap; text-align: right; margin-left: 12px; }
+.lp-meta-count { font-weight: 600; color: #023047; }
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 16px; right: 18px; z-index: 999;
+  background: rgba(2,48,71,.9); color: #fff;
+  padding: 7px 14px; border-radius: 7px; font-size: 11px;
+  opacity: 0; pointer-events: none; transition: opacity .3s;
+}
+#toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <!-- Wordmark — click to return to start screen -->
+  <div id="header-wordmark" onclick="showWelcome()" title="Back to start" style="cursor:pointer;">
+    <div id="header-logomark">
+      <span></span><span class="dim"></span>
+      <span class="dim"></span><span></span>
+    </div>
+    <div>
+      <h1>Org Chart Builder</h1>
+      <div id="header-sub">No chart loaded</div>
+    </div>
+  </div>
+
+  <div class="hdr-div"></div>
+  <input id="search" type="text" placeholder="Search people…" oninput="onSearch(this.value)">
+  <div id="header-spacer"></div>
+
+  <!-- Load dropdown -->
+  <div class="hdr-dd">
+    <button class="hbtn" id="load-btn" onclick="toggleDd('load-panel', 'load-btn')">⬆ Load ▾</button>
+    <div class="hdr-dd-panel" id="load-panel">
+      <div class="ddp-section">From Workday</div>
+      <button class="ddp-item" onclick="closeDds();document.getElementById('workday-upload-hdr').click()">
+        <span class="ddp-icon">📂</span>
+        <div><div class="ddp-name">My org</div><div class="ddp-desc">Upload my team's Workday export</div></div>
+      </button>
+      <button class="ddp-item" onclick="closeDds();loadMasterFromRepo()">
+        <span class="ddp-icon">🏢</span>
+        <div><div class="ddp-name">Pick a leader's org</div><div class="ddp-desc">Browse the full CMM org</div></div>
+      </button>
+      <div class="ddp-hr"></div>
+      <div class="ddp-section">From file</div>
+      <button class="ddp-item" onclick="closeDds();document.getElementById('file-in').click()">
+        <span class="ddp-icon">📁</span>
+        <div><div class="ddp-name">Import JSON</div><div class="ddp-desc">Restore a previously saved chart</div></div>
+      </button>
+    </div>
+    <!-- Hidden file inputs -->
+    <input type="file" id="workday-upload-hdr" accept=".xlsx,.xls" style="display:none" onchange="loadWorkday(event)">
+    <input type="file" id="master-upload-hdr"  accept=".xlsx,.xls" style="display:none" onchange="loadMasterWorkday(event)">
+    <input type="file" id="file-in"            accept=".json"      style="display:none" onchange="importJSON(event)">
+  </div>
+
+  <!-- Save dropdown -->
+  <div class="hdr-dd">
+    <button class="hbtn" id="save-btn" onclick="toggleDd('save-panel', 'save-btn')">💾 Save ▾</button>
+    <div class="hdr-dd-panel" id="save-panel">
+      <div class="ddp-section">Browser</div>
+      <button class="ddp-item" onclick="closeDds();saveState()">
+        <span class="ddp-icon">💾</span>
+        <div><div class="ddp-name">Browser Save</div><div class="ddp-desc">Auto-restores next session in this browser</div></div>
+      </button>
+      <button class="ddp-item" onclick="closeDds();loadState()">
+        <span class="ddp-icon">📂</span>
+        <div><div class="ddp-name">Browser Load</div><div class="ddp-desc">Restore last browser save</div></div>
+      </button>
+      <div class="ddp-hr"></div>
+      <div class="ddp-section">File</div>
+      <button class="ddp-item" onclick="closeDds();exportJSON()">
+        <span class="ddp-icon">⬇</span>
+        <div><div class="ddp-name">Export JSON</div><div class="ddp-desc">Portable backup — share or move between computers</div></div>
+      </button>
+      <div class="ddp-hr"></div>
+      <a class="ddp-item" id="header-download-link" download="claude-orgchart.html" href="#" onclick="closeDds()">
+        <span class="ddp-icon">⬇</span>
+        <div><div class="ddp-name">Download for offline use</div><div class="ddp-desc">Save this tool to your computer</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- View dropdown -->
+  <div class="hdr-dd">
+    <button class="hbtn" id="view-btn" onclick="toggleDd('view-panel', 'view-btn')">👁 View ▾</button>
+    <div class="hdr-dd-panel" id="view-panel">
+      <div class="ddp-section">Spacing</div>
+      <div class="vp-row">
+        <span class="vp-key">Vertical</span>
+        <input type="range" class="vp-range" id="vspacing-slider" min="20" max="100" value="100" oninput="onVSpacingChange(this.value)">
+        <span class="vp-val" id="vspacing-val">100%</span>
+      </div>
+      <div class="vp-row">
+        <span class="vp-key">Horizontal</span>
+        <input type="range" class="vp-range" id="hspacing-slider" min="20" max="100" value="100" oninput="onHSpacingChange(this.value)">
+        <span class="vp-val" id="hspacing-val">100%</span>
+      </div>
+      <div class="vp-hr"></div>
+      <button class="vp-action" onclick="closeDds();resetColors()">🎨 Reset all colors</button>
+    </div>
+  </div>
+
+  <!-- PNG (top-level) -->
+  <button class="hbtn" onclick="exportPNG()">🖼 Export PNG</button>
+
+  <!-- Analyze — hidden, WIP
+  <div class="hdr-div"></div>
+  <button class="hbtn-analyze" onclick="copyAnalysisPrompt()">✦ Analyze</button>
+  <div class="hdr-div"></div>
+  -->
+
+  <!-- Help (icon only) -->
+  <button class="hbtn-icon" onclick="showHelp()" title="Instructions">?</button>
+
+  <div class="hdr-div"></div>
+
+  <!-- Zoom -->
+  <div id="zoom-control">
+    <button onclick="zoomStep(-10)">−</button>
+    <span id="zoom-val">100%</span>
+    <button onclick="zoomStep(10)">+</button>
+    <button id="zoom-fit" onclick="zoomFit()">Fit</button>
+  </div>
+</div>
+
+<div id="legend" class="subbar"></div>
+<div id="search-results" class="subbar"></div>
+
+<div id="welcome-overlay">
+  <div id="welcome-panel">
+
+    <!-- Left brand panel -->
+    <div id="welcome-left">
+      <div id="welcome-left-top">
+        <div id="welcome-logomark">
+          <span></span><span class="dim"></span>
+          <span class="dim"></span><span></span>
+        </div>
+        <div id="welcome-tagline">Build your org.<br>Skip <em>PowerPoint.</em></div>
+        <div id="welcome-sub">Your org chart. Not a 45-minute PowerPoint incident.</div>
+      </div>
+      <div id="welcome-left-foot">CoverMyMeds · Internal tool</div>
+    </div>
+
+    <!-- Right action panel -->
+    <div id="welcome-right">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;">
+        <div id="welcome-right-label">How do you want to start?</div>
+        <button style="background:none;border:none;font-size:11px;color:#8ECAE6;font-family:inherit;cursor:pointer;font-weight:600;padding:0;letter-spacing:-.01em;" onclick="showHelp()">How to use this tool →</button>
+      </div>
+
+      <!-- Default options -->
+      <div id="welcome-options">
+
+        <!-- Option 1: My org (shows Workday drill-in) -->
+        <button class="w-option w-opt-a" onclick="showWdDrilldown('single')">
+          <div class="w-option-icon">📂</div>
+          <div class="w-option-body">
+            <div class="w-option-name">My org</div>
+            <div class="w-option-desc">Upload my Workday export and build my team's chart</div>
+          </div>
+          <div class="w-option-arrow">›</div>
+        </button>
+
+        <!-- Option 2: Pick a leader (loads from repo directly) -->
+        <button class="w-option w-opt-b" onclick="loadMasterFromRepo()">
+          <div class="w-option-icon">🏢</div>
+          <div class="w-option-body">
+            <div class="w-option-name">Pick a leader's org</div>
+            <div class="w-option-desc">Browse the full CMM org and choose whose team to view</div>
+          </div>
+          <div class="w-option-arrow">›</div>
+        </button>
+
+        <div class="w-divider">Resume a previous chart</div>
+
+        <!-- Option 3: Load a saved chart (browser or JSON) -->
+        <button class="w-option w-opt-c" onclick="loadSavedChart()">
+          <div class="w-option-icon">📁</div>
+          <div class="w-option-body">
+            <div class="w-option-name">Load a saved chart</div>
+            <div class="w-option-desc">Resume from browser or load a saved JSON file</div>
+          </div>
+          <div class="w-option-arrow">›</div>
+        </button>
+        <input type="file" id="welcome-json-in" accept=".json" style="display:none" onchange="loadJSONFromWelcome(event)">
+
+      </div>
+
+      <!-- Workday drill-in panel (shared for single + master) -->
+      <div id="wd-drilldown">
+        <button class="w-back-btn" onclick="hideWdDrilldown()">← Back</button>
+        <h3 id="wd-drilldown-title">Export from Workday</h3>
+        <div class="wd-step">
+          <div class="wd-step-num">1</div>
+          <div class="wd-step-text">In Workday, click the <b>search bar</b> at the top</div>
+        </div>
+        <div class="wd-step">
+          <div class="wd-step-num">2</div>
+          <div class="wd-step-text">Search for <span class="wd-pill">My Org Chart</span> or <span class="wd-pill">Org Chart</span> — select the result listed under <b>Reports</b>, not People</div>
+        </div>
+        <div class="wd-step">
+          <div class="wd-step-num">3</div>
+          <div class="wd-step-text">In the top-right corner, click the <b>Excel icon</b> and choose <span class="wd-pill">Excel (.xlsx)</span></div>
+        </div>
+        <div class="wd-step">
+          <div class="wd-step-num">4</div>
+          <div class="wd-step-text">Select the downloaded file below</div>
+        </div>
+        <div class="wd-upload-zone" onclick="triggerWdUpload()">
+          <div class="wd-upload-zone-icon">📂</div>
+          <div class="wd-upload-zone-label">Select your .xlsx file</div>
+          <div class="wd-upload-zone-sub" id="wd-upload-sub">My Org Chart or Org Chart export from Workday</div>
+        </div>
+        <!-- Hidden file inputs -->
+        <input type="file" id="workday-file-in"  accept=".xlsx,.xls" style="display:none" onchange="loadWorkday(event)">
+        <input type="file" id="master-file-in"   accept=".xlsx,.xls" style="display:none" onchange="loadMasterWorkday(event)">
+      </div>
+
+      <div id="welcome-error"></div>
+
+      <div id="welcome-foot">
+        <a class="w-foot-link" id="download-link" download="claude-orgchart.html" href="#">⬇ Download for offline use</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="canvas-wrap">
+  <div id="canvas">
+    <svg id="connector-svg"></svg>
+  </div>
+</div>
+
+<div id="ctx-menu"></div>
+
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div id="modal" onclick="event.stopPropagation()">
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+    <div class="mbtns">
+      <button class="btn-p" id="modal-ok">OK</button>
+      <button class="btn-s" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="root-picker-overlay" style="display:none;position:fixed;inset:0;z-index:860;background:rgba(0,0,0,.5);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,.25);font-family:'IBM Plex Sans',sans-serif;">
+    <h2 style="font-size:15px;font-weight:700;color:#023047;margin-bottom:10px;">Who is the top of this org?</h2>
+    <p style="font-size:12px;color:#555;margin-bottom:16px;line-height:1.6;">Multiple people could be the root. Select the person at the top of the org you want to display.</p>
+    <select id="root-picker-select" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #dde;font-size:13px;font-family:inherit;margin-bottom:16px;"></select>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-p" onclick="confirmRootPicker()">Build Chart</button>
+      <button class="btn-s" onclick="hideRootPicker()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Load source modal (browser save vs JSON) -->
+<style>
+#load-source-overlay {
+  display: none; position: fixed; inset: 0; z-index: 900;
+  background: rgba(0,0,0,.45);
+  align-items: center; justify-content: center;
+}
+#load-source-overlay.open { display: flex; }
+#load-source-box {
+  background: #fff; border-radius: 14px;
+  width: min(400px, 90vw);
+  box-shadow: 0 12px 40px rgba(0,0,0,.2);
+  font-family: 'IBM Plex Sans', sans-serif;
+  overflow: hidden;
+}
+#load-source-header {
+  background: #023047; color: #fff;
+  padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+#load-source-header h2 { font-size: 14px; font-weight: 700; }
+#load-source-close {
+  background: rgba(255,255,255,.15); border: none; color: #fff;
+  width: 26px; height: 26px; border-radius: 5px; cursor: pointer;
+  font-size: 14px; display: flex; align-items: center; justify-content: center;
+}
+#load-source-close:hover { background: rgba(255,255,255,.28); }
+#load-source-body { padding: 18px 20px 20px; }
+#load-source-desc {
+  font-size: 11.5px; color: #667; margin-bottom: 16px; line-height: 1.5;
+}
+.ls-option {
+  display: flex; align-items: center; gap: 14px;
+  border: 1px solid #eaeef2; border-radius: 10px;
+  padding: 13px 15px; margin-bottom: 9px;
+  cursor: pointer; background: none; width: 100%;
+  text-align: left; font-family: inherit;
+  transition: border-color .15s, background .15s;
+}
+.ls-option:last-child { margin-bottom: 0; }
+.ls-option:hover { border-color: #8ECAE6; background: #f4fbff; }
+.ls-icon {
+  width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 17px;
+}
+.ls-opt-browser .ls-icon { background: #EDF9F0; }
+.ls-opt-json .ls-icon { background: #f4f4f6; }
+.ls-body { flex: 1; }
+.ls-name { font-size: 13px; font-weight: 600; color: #023047; margin-bottom: 2px; }
+.ls-desc { font-size: 10.5px; color: #7a8fa0; line-height: 1.4; }
+.ls-arrow { font-size: 14px; color: #c8d8e4; flex-shrink: 0; }
+.ls-option:hover .ls-arrow { color: #8ECAE6; }
+</style>
+
+<div id="load-source-overlay" onclick="if(event.target===this)closLoadSource()">
+  <div id="load-source-box">
+    <div id="load-source-header">
+      <h2>Load a saved chart</h2>
+      <button id="load-source-close" onclick="closLoadSource()">✕</button>
+    </div>
+    <div id="load-source-body">
+      <div id="load-source-desc">A browser-saved chart was found. Load it or choose a JSON file instead.</div>
+      <button class="ls-option ls-opt-browser" onclick="loadFromBrowser()">
+        <div class="ls-icon">🔄</div>
+        <div class="ls-body">
+          <div class="ls-name">Continue from browser</div>
+          <div class="ls-desc" id="ls-browser-desc">Load your most recently saved chart</div>
+        </div>
+        <div class="ls-arrow">›</div>
+      </button>
+      <button class="ls-option ls-opt-json" onclick="loadFromJSON()">
+        <div class="ls-icon">📁</div>
+        <div class="ls-body">
+          <div class="ls-name">Load a JSON file</div>
+          <div class="ls-desc">Browse for a saved JSON from a previous export</div>
+        </div>
+        <div class="ls-arrow">›</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="analyze-overlay" onclick="analyzeOverlayClick(event)">
+  <div id="analyze-box">
+    <div id="analyze-header">
+      <div id="analyze-header-left">
+        <div>
+          <h2>✦ Analyze with Claude</h2>
+          <div id="analyze-header-sub">Your org data + analysis prompt — ready to paste</div>
+        </div>
+      </div>
+      <button id="analyze-close" onclick="hideAnalyze()">✕</button>
+    </div>
+    <div id="analyze-body">
+      <div class="az-steps">
+        <div class="az-step">
+          <div class="az-step-num">1</div>
+          <div class="az-step-head">Copy the prompt</div>
+          <div class="az-step-desc">It's already copied to your clipboard. Use the button below if you need it again.</div>
+        </div>
+        <div class="az-step">
+          <div class="az-step-num">2</div>
+          <div class="az-step-head">Open Claude</div>
+          <div class="az-step-desc">Go to claude.ai and start a new chat.</div>
+        </div>
+        <div class="az-step">
+          <div class="az-step-num">3</div>
+          <div class="az-step-head">Paste &amp; send</div>
+          <div class="az-step-desc">Paste the prompt and hit enter. Results in under a minute.</div>
+        </div>
+      </div>
+      <div class="az-covers-label">Analysis covers</div>
+      <div class="az-covers">
+        <span class="az-pill">Span of control</span>
+        <span class="az-pill">Org structure &amp; depth</span>
+        <span class="az-pill">Risk areas</span>
+        <span class="az-pill">Balance &amp; design</span>
+        <span class="az-pill">AI readiness</span>
+        <span class="az-pill">Overall assessment</span>
+      </div>
+      <div class="az-textarea-wrap">
+        <textarea id="analyze-textarea" readonly spellcheck="false"></textarea>
+      </div>
+    </div>
+    <div id="analyze-footer">
+      <button id="analyze-copy-btn" onclick="recopyprompt()">📋 Copy again</button>
+      <a id="analyze-open-btn" href="https://claude.ai" target="_blank">Open Claude ↗</a>
+      <div id="analyze-footer-note">Prompt includes your org structure, titles, levels,<br>managers, and status flags as of today.</div>
+    </div>
+  </div>
+</div>
+
+<div id="help-overlay" onclick="helpOverlayClick(event)">
+  <div id="help-box">
+    <div id="help-box-header">
+      <h2>Org Chart Builder — Instructions</h2>
+      <button id="help-close" onclick="hideHelp()">✕</button>
+    </div>
+    <div id="help-body">
+
+      <div class="help-section">
+        <h3>Loading an Org Chart</h3>
+        <div class="help-row">
+          <span class="help-tag">Welcome screen</span>
+          <div class="help-desc">When the tool opens, choose how to start: <b>My org</b> (your Workday export), <b>Pick a leader's org</b> (full CMM org, then select whose team), or <b>Restore a saved chart</b> (load a JSON). Click the logo or title at any time to return to this screen.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">⬆ Load ▾</span>
+          <div class="help-desc">The Load dropdown in the toolbar has three options: <b>My org</b> — upload your own Workday XLSX; <b>Pick a leader's org</b> — browse the full CMM org by leader; <b>Import JSON</b> — restore a previously saved chart file.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>My Org — Workday Export</h3>
+        <div class="help-row">
+          <span class="help-tag">Step 1</span>
+          <div class="help-desc">Log in to Workday and click the <b>search bar</b> at the top.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Step 2</span>
+          <div class="help-desc">Search for <b>My Team Employment Data</b> and select the result under <b>Reports</b> (not Tasks or People). If unavailable, search for <b>My Org Chart</b> instead. Both formats work.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Step 3</span>
+          <div class="help-desc">In the top-right corner of the report, click the <b>Excel icon</b> → <b>Excel (.xlsx)</b> to download.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Step 4</span>
+          <div class="help-desc">Click <b>Load ▾ → My org</b> (or the My org button on the welcome screen) and select your downloaded .xlsx file. The chart builds automatically.</div>
+        </div>
+        <div class="help-note">
+          <b>Root person prompt:</b> If the tool asks "Who is the top of this org?" after uploading, select the correct person and click Confirm. This happens when the file contains multiple potential root nodes.
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Pick a Leader's Org</h3>
+        <div class="help-row">
+          <span class="help-tag">How it works</span>
+          <div class="help-desc">Clicking <b>Pick a leader's org</b> loads the full CMM org file automatically and opens a searchable list of every person with direct reports. Click any row to load that person's org as the root of the chart.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Search</span>
+          <div class="help-desc">The search box at the top of the picker filters by name or title in real time. Cursor is placed here automatically when the picker opens.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Levels − / All / +</span>
+          <div class="help-desc">The stepper between search and the list controls how many levels below the selected leader to include. Default is <b>All</b>. Press <b>−</b> to step down (All → 8 → 7 → … → 1); press <b>+</b> to step back up. Setting <b>2</b> gives the leader plus their direct reports' teams — a clean executive summary view for large orgs like Chrissy's.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Contingent workers</span>
+          <div class="help-desc">Workday marks contingent workers with <b>[C]</b> in their name. If the selected org contains any, you'll be prompted to <b>Exclude</b> or <b>Include all</b> before loading. Excluding them keeps the chart focused on full-time headcount. Reload to change this choice.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Offline use</span>
+          <div class="help-desc">When running the tool locally (downloaded file), "Pick a leader's org" can't fetch the org file from the web automatically. It will prompt you to select the XLSX file manually instead.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Navigating the Chart</h3>
+        <div class="help-row">
+          <span class="help-tag">Auto-fit on load</span>
+          <div class="help-desc">The chart automatically fits to the visible window when first loaded. Use <b>Fit</b> in the zoom strip anytime to re-fit.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Scroll / Pan</span>
+          <div class="help-desc">Use scrollbars or <b>click and drag</b> on the canvas background to pan around the chart.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Zoom − / +</span>
+          <div class="help-desc">Step zoom in 10% increments. Or hold <b>Ctrl</b> (Cmd on Mac) and scroll with the mouse wheel. Range is 20%–150%.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Search bar</span>
+          <div class="help-desc">Type a name or title to find people. Click a result to scroll to and highlight that node on the chart.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">👁 View ▾</span>
+          <div class="help-desc">Opens the View panel with <b>Vertical spacing</b> (gap between manager and reports) and <b>Horizontal spacing</b> (gap between sibling branches) sliders. Also contains <b>Reset all colors</b> to clear all color states back to default.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Editing the Chart</h3>
+        <div class="help-row">
+          <span class="help-tag">Click a node</span>
+          <div class="help-desc">Opens the context menu with all editing actions for that person.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Set color state</span>
+          <div class="help-desc">In the context menu, click any color state to apply it to the node — Default, Budgeted/Open, Reporting Change, Hold, or AI Agent. See Color States below.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Toggle layout</span>
+          <div class="help-desc">In the context menu, cycle the node's layout between Horizontal, H+Sidebar, and Vertical. Also accessible via the <b>⇆ / ⇅</b> button that appears at the top-right of a node on hover.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Collapse / Expand</span>
+          <div class="help-desc">In the context menu, collapse a node to hide its subtree, or expand to show it again. Useful for focusing on one branch of a large chart.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">✏️ Edit Name / Title</span>
+          <div class="help-desc">In the context menu, edit the person's display name and title directly. Useful for correcting Workday data or adding role details.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">🔀 Move to Different Manager</span>
+          <div class="help-desc">In the context menu, reassign a person (and their entire subtree) to a different manager. Type to search. Not available for the root node.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">➕ Add Direct Report</span>
+          <div class="help-desc">In the context menu (or the <b>+</b> button on hover), add a new person under the selected node. Useful for open or budgeted roles not yet in Workday.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">🤖 Add AI Agent</span>
+          <div class="help-desc">Adds a teal-colored AI Agent node under the selected person — for visualizing AI roles or agent positions in the org structure.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">◀ Move Left / Right ▶</span>
+          <div class="help-desc">Reorders a person among their siblings — changes their left-to-right position within their manager's team. Not available for root.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">🗑 Remove</span>
+          <div class="help-desc">Removes the person <b>and all of their direct reports</b> from the chart. Not available for root. This is permanent until you reload from a save.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Layout Modes</h3>
+        <div class="help-note" style="margin-bottom:10px;">
+          The chart picks a starting layout automatically based on org size and depth. You can override any node manually — manual overrides are preserved when you save and reload.
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Horizontal</span>
+          <div class="help-desc">Direct reports displayed <b>side by side</b>. Best for managers with a small number of reports. Used automatically at the top levels of smaller orgs.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">H+Sidebar</span>
+          <div class="help-desc">Sub-team leads go <b>horizontal</b>; individual contributors stack vertically on the right. Best for mixed teams where some reports have sub-trees and others are individual contributors.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Vertical</span>
+          <div class="help-desc">All direct reports stacked in a <b>column</b>. Best for large teams or when horizontal space is limited. Used automatically for large orgs to control width.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Color States</h3>
+        <div class="help-row">
+          <span class="help-tag" style="background:#fff;border-color:#023047;color:#023047">Default</span>
+          <div class="help-desc">Standard filled role — white background, navy border.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag" style="background:#E6F3FB;border-color:#1A6EA8;color:#0a3d5a">Budgeted / Open</span>
+          <div class="help-desc">Approved or budgeted role not yet filled. Use for open headcount or future positions.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag" style="background:#FFF2EB;border-color:#B85C00;color:#5a2c00">Reporting Change</span>
+          <div class="help-desc">A person or role moving to a different part of the org — useful for illustrating pending restructuring.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag" style="background:#EFEFEF;border-color:#999999;color:#444444">Hold</span>
+          <div class="help-desc">Role or person on pause — hiring on hold, backfill delayed, or position under review.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag" style="background:#E0F5F3;border-color:#1a6b63;color:#0d3b37">AI Agent</span>
+          <div class="help-desc">Teal color for AI Agent nodes added via <b>🤖 Add AI Agent</b> in the context menu.</div>
+        </div>
+        <div class="help-note">
+          Use <b>View ▾ → Reset all colors</b> to clear all color states back to Default at once.
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Saving Your Work</h3>
+        <div class="help-note" style="margin-bottom:12px;">
+          <b>Important:</b> Edits only persist if you explicitly save. Closing the tab without saving loses your changes.
+        </div>
+        <div class="help-row">
+          <span class="help-tag">💾 Save ▾</span>
+          <div class="help-desc">Opens the Save menu with three options: Browser Save, Browser Load, and Export JSON.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Browser Save</span>
+          <div class="help-desc">Saves everything — colors, layouts, spacing, zoom — to your browser's local storage. Reloads automatically next time you open the tool in the same browser on the same computer. <b>Use this frequently while working.</b></div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Export JSON</span>
+          <div class="help-desc">Downloads a .json file with the complete chart state. Use this to back up, transfer to another computer, or share with someone else. The layout at time of export is frozen — reloading will always show the chart exactly as it was. <b>Export a JSON at the end of each session as a portable backup.</b></div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Browser Load</span>
+          <div class="help-desc">Restores the most recent browser save. Useful if you've made changes and want to revert.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Import JSON</span>
+          <div class="help-desc">Under <b>Load ▾</b>, restores a previously exported JSON file exactly as it was saved — on any computer, any browser.</div>
+        </div>
+        <div class="help-note">
+          <b>Sharing with someone else:</b> Send them the <b>claude-orgchart.html</b> file and your <b>.json export</b>. They open the HTML, click Load ▾ → Import JSON, and select your file. Browser saves are not transferable between computers.
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Exporting for Presentations</h3>
+        <div class="help-row">
+          <span class="help-tag">🖼 PNG</span>
+          <div class="help-desc">Renders the full chart as a high-resolution PNG (2× retina quality) — white background, no UI controls. Paste directly into PowerPoint or Teams. Click <b>Fit</b> first to ensure the full chart is in frame. <b>Requires an internet connection.</b></div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Screenshot tip</span>
+          <div class="help-desc">If PNG is unavailable offline, use your OS screenshot tool: Windows <b>Win+Shift+S</b> / Mac <b>Cmd+Shift+4</b>. The ⇆ and + buttons are only visible on hover and won't appear in captures.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Offline Use</h3>
+        <div class="help-row">
+          <span class="help-tag">Download</span>
+          <div class="help-desc">Under <b>Save ▾ → Download for offline use</b> (or the link on the welcome screen footer), download the tool as a self-contained HTML file. Open it directly in any browser — no internet or server required.</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">What works offline</span>
+          <div class="help-desc">Everything works offline except: <b>PNG export</b> (requires internet) and <b>Pick a leader's org</b> auto-fetch (will prompt you to select the XLSX manually instead).</div>
+        </div>
+        <div class="help-row">
+          <span class="help-tag">Fonts offline</span>
+          <div class="help-desc">The tool uses a Google Font (IBM Plex Sans) loaded from the web. Offline it falls back to your system's default sans-serif font — layout is unaffected.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Analyzing Your Org with Claude</h3>
+        <div class="help-note">
+          The tool doesn't have a built-in AI feature, but you can get span-of-control analysis, team structure feedback, manager-to-IC ratios, depth analysis, succession gaps, and more by exporting your chart as JSON (<b>Save ▾ → Export JSON</b>) and pasting it into a conversation at <b>claude.ai</b>.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="leader-picker-overlay" onclick="if(event.target===this)hideLeaderPicker()">
+  <div id="leader-picker-box">
+    <div id="leader-picker-header">
+      <div>
+        <h2>Choose a leader</h2>
+        <p>Only people with direct reports are shown. Click a row to load their org.</p>
+      </div>
+      <button id="leader-picker-close" onclick="hideLeaderPicker()">✕</button>
+    </div>
+    <div id="leader-picker-search-wrap">
+      <input id="leader-picker-search" type="text" placeholder="Search by name or title…" oninput="filterLeaderPicker(this.value)">
+    </div>
+    <div id="leader-picker-levels">
+      <span id="lp-levels-label">Levels to include <span>— below selected leader</span></span>
+      <div id="lp-stepper">
+        <button class="lp-step-btn" onclick="lpStepLevels(-1)">−</button>
+        <div id="lp-levels-val">All</div>
+        <button class="lp-step-btn" onclick="lpStepLevels(1)">+</button>
+      </div>
+    </div>
+    <div id="leader-picker-list">
+      <div id="leader-picker-loading">Parsing file…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────────────────────────────────────
+// Master org XLSX files stored in the repo — each is a separate department
+// export. All are fetched and merged into one combined leader-picker dataset.
+// Add a new department here (label + repo-relative URL) to include it.
+const MASTER_ORG_FILES = [
+  { label: 'Chrysanthi Hand', url: './Chrysanthi Hand Department.xlsx' },
+  { label: 'Nasir Ahmed',     url: './Nasir Ahmed Department.xlsx' },
+];
+
+const NODE_W   = 175;   // node width  (must match CSS)
+const NODE_H   = 64;    // matches fixed CSS height (60px) + 2px border top + 2px border bottom
+const H_GAP_BASE = 24;   // horizontal gap base
+const V_GAP_BASE = 44;   // vertical gap base
+const PAD        = 48;   // canvas padding
+let vSpacingScale = 1.0;  // vertical spacing (controlled by V slider)
+let hSpacingScale = 1.0;  // horizontal spacing (controlled by H slider)
+// Depth-aware gap: level 3+ gets an extra 0.65 compression on top of the slider
+function hGap(depth){ return Math.round(H_GAP_BASE * hSpacingScale * (depth>=2 ? 0.65 : 1)); }
+function vGap(depth){ return Math.round(V_GAP_BASE * vSpacingScale * (depth>=2 ? 0.65 : 1)); }
+const STROKE   = 'rgba(2,48,71,0.38)';
+const STROKE_W = 2;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PALETTE
+// ─────────────────────────────────────────────────────────────────────────────
+const NODE_STATES = {
+  default:   { label:'Default',          bg:'#FFFFFF', border:'#023047', text:'#023047' },
+  open:      { label:'Budgeted / Open',  bg:'#E6F3FB', border:'#1A6EA8', text:'#0a3d5a' },
+  reporting: { label:'Reporting Change', bg:'#FFF2EB', border:'#B85C00', text:'#5a2c00' },
+  hold:      { label:'Hold',             bg:'#EFEFEF', border:'#999999', text:'#444444' },
+  agent:     { label:'AI Agent',         bg:'#E0F5F3', border:'#1a6b63', text:'#0d3b37' },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ORG DATA
+// ─────────────────────────────────────────────────────────────────────────────
+const PEOPLE_DEF = [
+  { id:'greg',      name:'Greg Hart',               title:'VP, SCP',                                managerId:null      },
+  { id:'matt_b',    name:'Mathew Bramson',            title:'Sr. Director, Product Management',       managerId:'greg'    },
+  { id:'ben',       name:'Ben Branham',               title:'Director, UI/UX Engineering',            managerId:'greg'    },
+  { id:'kyle_d',    name:'Kyle Dresbach',             title:'Sr. Director, Product Portfolio Mgmt',   managerId:'greg'    },
+  { id:'cal',       name:'Cal Shorey',                title:'Lead Business Developer',                managerId:'greg'    },
+  { id:'stephi',    name:'Stephi Teat',               title:'Lead Business Developer',                managerId:'greg'    },
+  { id:'jill',      name:'Jill Schumacher',           title:'Executive Assistant I',                  managerId:'greg'    },
+  { id:'sandhya',   name:'Sandhya Bhaskar',           title:'Sr. Director, Enabling Capabilities',    managerId:'greg'    },
+  { id:'kyle_t',    name:'Kyle Thomas',               title:'Sr. Product Manager',                    managerId:'sandhya' },
+  { id:'taylor',    name:'Taylor Putnam-Majarian',    title:'Sr. Product Manager',                    managerId:'sandhya' },
+  { id:'matt_p',    name:'Matthew Petzelt',           title:'Sr. Associate Product Manager',          managerId:'sandhya' },
+  { id:'apm_scp',   name:'Open – Associate PM',          title:'Associate Product Manager (P2)',          managerId:'sandhya' },
+  { id:'m3_open',   name:'M3 Open',                   title:'Sr. Manager, Product Management',        managerId:'matt_b'  },
+  { id:'andrea',    name:'Andrea Stephenson',         title:'Sr. Manager, Product Management',        managerId:'matt_b'  },
+  { id:'cameron',   name:'Cameron Barr',              title:'Sr. Product Manager',                    managerId:'matt_b'  },
+  { id:'emily_k',   name:'Emily Kaiser',              title:'Product Manager',                        managerId:'m3_open'  },
+  { id:'luke',      name:'Luke Vouis',                title:'Product Manager',                        managerId:'matt_b'  },
+  { id:'sean_j',    name:'Sean Johnson',              title:'Product Manager',                        managerId:'m3_open'  },
+  { id:'lacey',     name:'Lacey Short',               title:'Sr. Associate Product Manager',          managerId:'m3_open'  },
+  { id:'marissa',   name:'Marissa Malen',             title:'Lead Product Manager',                   managerId:'m3_open'  },
+  { id:'joshua_p',  name:'Joshua Pratt',              title:'Product Manager',                        managerId:'andrea'  },
+  { id:'meghan',    name:'Meghan Gabaly',             title:'Sr. Associate Product Manager',          managerId:'andrea'  },
+  { id:'laura',     name:'Laura Weeks',               title:'Sr. Associate Product Manager',          managerId:'andrea'  },
+  { id:'maisha',    name:'Maisha Talukder',           title:'Product Manager',                        managerId:'andrea'  },
+  { id:'jenna',     name:'Jenna Sumner Bedingfield',  title:'Product Owner',                          managerId:'andrea'  },
+  { id:'pm_portal', name:'Open – Single Portal PM',     title:'Product Manager (P4)',                    managerId:'andrea'  },
+  { id:'kristen',   name:'Kristen Hazen',             title:'Sr. Manager, UX',                        managerId:'ben'     },
+  { id:'wesley',    name:'Wesley Smith',              title:'Sr. Manager, UX',                        managerId:'ben'     },
+  { id:'jackie',    name:'Jacquelyn Hartley',         title:'UX Strategist',                          managerId:'ben'     },
+  { id:'mildred',   name:'Mildred van den Boom',      title:'UX Researcher',                          managerId:'kristen' },
+  { id:'sarah_m',   name:'Sarah Manthey',             title:'UX Researcher',                          managerId:'kristen' },
+  { id:'michelle_l',name:'Michelle Ludwin',           title:'Sr. UX Researcher',                      managerId:'kristen' },
+  { id:'kristin_f', name:'Kristin Fick',              title:'Sr. UX Designer',                        managerId:'kristen' },
+  { id:'jensen',    name:'Jensen Laatsch',            title:'Sr. UX Designer',                        managerId:'kristen' },
+  { id:'dan_g',     name:'Dan Gualtieri',             title:'Sr. UX Designer',                        managerId:'kristen' },
+  { id:'bre',       name:'Bre Jacobs',                title:'UX Researcher',                          managerId:'kristen' },
+  { id:'sean_m',    name:'Sean Moyer',                title:'UX Designer',                            managerId:'wesley'  },
+  { id:'isabel',    name:'Isabel Andrews',            title:'UX Designer',                            managerId:'wesley'  },
+  { id:'matt_s',    name:'Matthew Skarsten',          title:'UX Designer',                            managerId:'wesley'  },
+  { id:'meg_f',     name:'Meg Ferillo',               title:'Sr. UX Researcher',                      managerId:'wesley'  },
+  { id:'jeanne',    name:'Jeanne Lyons',              title:'UX Researcher',                          managerId:'wesley'  },
+  { id:'alex_g',    name:'Alex Girvin',               title:'Sr. UX Designer',                        managerId:'wesley'  },
+  { id:'giselle',   name:'Giselle Belkin',            title:'Director, Product Portfolio Management', managerId:'kyle_d'  },
+  { id:'carly',     name:'Carly Fuerst',              title:'Product Portfolio Manager',              managerId:'kyle_d'  },
+  { id:'michael_c', name:'Michael Czyz',              title:'Sr. Product Portfolio Manager',          managerId:'kyle_d'  },
+  { id:'katie_r',   name:'Katie Russell',             title:'Mgr, Interoperability & Standards',      managerId:'kyle_d'  },
+  { id:'matt_h',    name:'Matthew Hamski',            title:'Sr. Product Portfolio Manager',          managerId:'giselle' },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUNTIME STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let people={}, children={}, nodeState={}, nodeLayout={}, collapsed={};
+let openMenuId=null;
+let rootId='greg'; // dynamic — updated when Workday file is loaded
+// Default: root node lays out its children horizontally (level 1 = horizontal bus),
+// every deeper node lays out its children vertically.
+function nodeDepth(id){
+  let d=0, cur=id, seen=new Set();
+  while(people[cur]&&people[cur].managerId&&!seen.has(cur)){
+    seen.add(cur); cur=people[cur].managerId; d++;
+  }
+  return d;
+}
+
+// Count all descendants of a node
+function countDesc(id, memo={}){
+  if(memo[id]!==undefined) return memo[id];
+  memo[id] = (children[id]||[]).filter(k=>people[k]).reduce((s,c)=>s+1+countDesc(c,memo),0);
+  return memo[id];
+}
+
+// Smart auto-layout: called once per node when no manual override exists.
+// Rules (in priority order):
+//  1. Root always horizontal — direct reports spread across
+//  2. Depth 1 nodes: horizontal if they have any children (are managers), vertical if leaf
+//  3. Deeper nodes: pick based on subtree shape
+//    - All children are leaves AND ≤6 kids → horizontal (compact row)
+//    - Mix of managers and leaves → hs (managers horizontal, leaves sidebar)
+//    - Children with large subtrees OR >8 kids → vertical
+//    - Otherwise horizontal if total width estimate fits
+function autoLayout(id){
+  const depth = nodeDepth(id);
+  const kids  = (children[id]||[]).filter(k=>people[k]);
+  if(!kids.length) return 'v';
+
+  if(depth === 0) return 'h';
+  if(depth === 1){
+    // Only spread horizontally if root has a small number of direct reports.
+    // Large orgs (Chrissy-level) need vertical at depth 1 or the chart explodes.
+    const rootKids = (children[rootId]||[]).filter(k=>people[k]);
+    return rootKids.length <= 5 ? 'h' : 'v';
+  }
+
+  // Depth 2+
+  const kidManagers = kids.filter(k => (children[k]||[]).filter(c=>people[c]).length > 0);
+  const kidLeaves   = kids.filter(k => (children[k]||[]).filter(c=>people[c]).length === 0);
+  const totalKids   = kids.length;
+
+  if(kidManagers.length === 0 && totalKids <= 4) return 'h';
+  if(kidManagers.length === 0) return 'v';
+  if(kidManagers.length > 0 && kidLeaves.length > 0) return 'hs';
+
+  // All children are managers — keep vertical to control width
+  return 'v';
+}
+
+function getLayout(id){
+  if(nodeLayout.hasOwnProperty(id)) return nodeLayout[id];
+  return autoLayout(id);
+}
+
+function initData(){
+  rootId='__empty__';
+  people={}; children={};
+  // No default org — tool starts blank, user loads via Workday or JSON
+  // Default state for open roles
+
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LAYOUT ENGINE  — computes {x, y, subtreeW, subtreeH} for each node
+// All coordinates are relative to the subtree's own top-left origin.
+// After computing, we translate to absolute canvas coordinates.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Returns { x, y, w, h, subtreeW, subtreeH, children:[...same] }
+// x,y = top-left of the NODE BOX within the subtree's bounding box
+function computeLayout(id, nodeH, depth=0){
+  const kids = visibleKids(id);
+  const lout = getLayout(id);
+
+  if(kids.length===0 || collapsed[id]){
+    return { id, x:0, y:0, w:NODE_W, h:nodeH, subtreeW:NODE_W, subtreeH:nodeH, kids:[] };
+  }
+
+  const kidLayouts = kids.map(k=>computeLayout(k, nodeH, depth+1));
+
+  if(lout==='h'){
+    // Children spread HORIZONTALLY below this node
+    // Each child subtree sits side by side with H_GAP between
+    const hg=hGap(depth), vg=vGap(depth);
+    let totalKidsW = kidLayouts.reduce((s,k)=>s+k.subtreeW,0) + hg*(kids.length-1);
+    let maxKidsH   = Math.max(...kidLayouts.map(k=>k.subtreeH));
+
+    // Centre the node over the children row
+    const nodeX = Math.max(0, (totalKidsW - NODE_W)/2);
+    const subtreeW = Math.max(NODE_W, totalKidsW);
+    const subtreeH = nodeH + vg + maxKidsH;
+
+    // Position each child subtree
+    let cursor = (subtreeW - totalKidsW)/2; // centre children under node
+    kidLayouts.forEach(kl=>{
+      kl._offsetX = cursor;
+      kl._offsetY = nodeH + vg;
+      cursor += kl.subtreeW + hg;
+    });
+
+    return { id, x:nodeX, y:0, w:NODE_W, h:nodeH, subtreeW, subtreeH, kids:kidLayouts };
+
+  } else if(lout==='hs'){
+    // ── H+Sidebar: bus children (have sub-reports) spread horizontally,
+    //              leaf children stack vertically in a sidebar on the right.
+    //              Parent centres over the full combined width.
+    const hg=hGap(depth), vg=vGap(depth);
+
+    const busKids  = kidLayouts.filter(kl => visibleKids(kl.id).length > 0);
+    const sideKids = kidLayouts.filter(kl => visibleKids(kl.id).length === 0);
+
+    // Bus section width
+    const busKidsW = busKids.reduce((s,k)=>s+k.subtreeW,0);
+    const busW = busKidsW + hg*(Math.max(busKids.length-1,0));
+    const busH = busKids.length ? Math.max(...busKids.map(k=>k.subtreeH)) : 0;
+
+    // Sidebar section width/height
+    const sideW = sideKids.length ? Math.max(...sideKids.map(k=>k.subtreeW)) : 0;
+    const vgs   = vGap(depth+1);
+    const sideH = sideKids.reduce((s,k)=>s+k.subtreeH,0) + vgs*(Math.max(sideKids.length-1,0));
+
+    const gapBetween = (sideKids.length && busKids.length) ? Math.max(hg, 40) : 0;
+    const totalW  = busW + gapBetween + sideW;
+    const subtreeW = Math.max(NODE_W, totalW);
+    const subtreeH = nodeH + vg + Math.max(busH, sideH);
+
+    // Centre parent node over the FULL width
+    const nodeX = Math.max(0, (subtreeW - NODE_W) / 2);
+
+    // Position bus kids left-aligned, starting at x=0
+    let cursor = 0;
+    busKids.forEach(kl=>{
+      kl._offsetX = cursor;
+      kl._offsetY = nodeH + vg;
+      kl._isBus   = true;
+      cursor += kl.subtreeW + hg;
+    });
+
+    // Position sidebar kids flush right
+    const sideStartX = busW + gapBetween;
+    let sCursor = nodeH + vg;
+    sideKids.forEach(kl=>{
+      kl._offsetX = sideStartX;
+      kl._offsetY = sCursor;
+      kl._isSide  = true;
+      sCursor += kl.subtreeH + vgs;
+    });
+
+    return { id, x:nodeX, y:0, w:NODE_W, h:nodeH, subtreeW, subtreeH, kids:kidLayouts, lout:'hs', busW, sideStartX };
+
+  } else if(lout==='v2'){
+    // TWO-COLUMN VERTICAL: split children into left and right columns
+    const INDENT = 30;
+    const hg = hGap(depth);
+    const vgv = vGap(depth);
+    const gapBetween = kl => (children[kl.id]||[]).length === 0 ? Math.round(vgv * 0.45) : vgv;
+
+    const half = Math.ceil(kidLayouts.length / 2);
+    const leftKids  = kidLayouts.slice(0, half);
+    const rightKids = kidLayouts.slice(half);
+
+    // Height of each column
+    function colHeight(kls){
+      if(!kls.length) return 0;
+      return kls.reduce((s,k)=>s+k.subtreeH,0)
+        + kls.slice(0,-1).reduce((s,kl)=>s+gapBetween(kl),0);
+    }
+    const leftH  = colHeight(leftKids);
+    const rightH = colHeight(rightKids);
+    const leftW  = leftKids.length  ? Math.max(...leftKids.map(k=>k.subtreeW))  : 0;
+    const rightW = rightKids.length ? Math.max(...rightKids.map(k=>k.subtreeW)) : 0;
+
+    const totalW  = INDENT + leftW + hg + rightW;
+    const totalH  = Math.max(leftH, rightH);
+    const subtreeW = Math.max(NODE_W, totalW);
+    const subtreeH = nodeH + vgv + totalH;
+
+    // Position left column
+    let cur = nodeH + vgv;
+    leftKids.forEach((kl, i)=>{
+      kl._offsetX = INDENT;
+      kl._offsetY = cur;
+      kl._col = 'left';
+      cur += kl.subtreeH + (i < leftKids.length-1 ? gapBetween(kl) : 0);
+    });
+
+    // Position right column
+    cur = nodeH + vgv;
+    rightKids.forEach((kl, i)=>{
+      kl._offsetX = INDENT + leftW + hg;
+      kl._offsetY = cur;
+      kl._col = 'right';
+      cur += kl.subtreeH + (i < rightKids.length-1 ? gapBetween(kl) : 0);
+    });
+
+    return { id, x:0, y:0, w:NODE_W, h:nodeH, subtreeW, subtreeH, kids:kidLayouts, lout:'v2', leftW, rightW, INDENT, hg };
+
+  } else if(lout==='h2'){
+    // TWO-ROW HORIZONTAL: split children into two rows
+    const hg = hGap(depth);
+    const vg = vGap(depth);
+    const rowGap = Math.round(vg * 0.7); // gap between the two rows
+
+    const half = Math.ceil(kidLayouts.length / 2);
+    const row1 = kidLayouts.slice(0, half);
+    const row2 = kidLayouts.slice(half);
+
+    function rowWidth(kls){
+      return kls.reduce((s,k)=>s+k.subtreeW,0) + hg*(Math.max(kls.length-1,0));
+    }
+    const row1W = rowWidth(row1);
+    const row2W = rowWidth(row2);
+    const row1H = row1.length ? Math.max(...row1.map(k=>k.subtreeH)) : 0;
+    const row2H = row2.length ? Math.max(...row2.map(k=>k.subtreeH)) : 0;
+
+    const totalW  = Math.max(row1W, row2W);
+    const subtreeW = Math.max(NODE_W, totalW);
+    const subtreeH = nodeH + vg + row1H + rowGap + row2H;
+    const nodeX = Math.max(0, (subtreeW - NODE_W) / 2);
+
+    // Row 1 — left-aligned
+    let cur = (subtreeW - row1W) / 2;
+    row1.forEach(kl=>{
+      kl._offsetX = cur;
+      kl._offsetY = nodeH + vg;
+      kl._row = 1;
+      cur += kl.subtreeW + hg;
+    });
+
+    // Row 2
+    cur = (subtreeW - row2W) / 2;
+    row2.forEach(kl=>{
+      kl._offsetX = cur;
+      kl._offsetY = nodeH + vg + row1H + rowGap;
+      kl._row = 2;
+      cur += kl.subtreeW + hg;
+    });
+
+    return { id, x:nodeX, y:0, w:NODE_W, h:nodeH, subtreeW, subtreeH, kids:kidLayouts, lout:'h2', row1H, rowGap, vg };
+
+  } else {
+    // Children stacked VERTICALLY, aligned left, indented
+    const INDENT = 30; // left indent for vertical children column
+    let maxKidW = Math.max(...kidLayouts.map(k=>k.subtreeW));
+    // Use a tighter gap between leaf siblings (no children) vs those with sub-teams
+    const vgv = vGap(depth);
+    const gapBetween = kl => (children[kl.id]||[]).length === 0 ? Math.round(vgv * 0.45) : vgv;
+    let totalKidsH = kidLayouts.reduce((s,k)=>s+k.subtreeH,0)
+      + kidLayouts.slice(0,-1).reduce((s,kl)=>s+gapBetween(kl),0);
+
+    const subtreeW = INDENT + maxKidW;
+    const subtreeH = nodeH + vgv + totalKidsH;
+
+    let cursor = nodeH + vgv;
+    kidLayouts.forEach((kl, i)=>{
+      kl._offsetX = INDENT;
+      kl._offsetY = cursor;
+      cursor += kl.subtreeH + (i < kidLayouts.length-1 ? gapBetween(kl) : 0);
+    });
+
+    return { id, x:0, y:0, w:NODE_W, h:nodeH, subtreeW:Math.max(NODE_W, subtreeW), subtreeH, kids:kidLayouts };
+  }
+}
+
+function visibleKids(id){
+  return (children[id]||[]).filter(k=>people[k]);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER  — place nodes + draw SVG connectors from layout tree
+// ─────────────────────────────────────────────────────────────────────────────
+let nodeHeights = {}; // id → measured height after first render
+
+function render(){
+  // Guard: if rootId isn't in people, show welcome instead of crashing
+  if(!people[rootId]){
+    showWelcome();
+    return;
+  }
+
+  const canvas = document.getElementById('canvas');
+
+  // Pass 1: render nodes with estimated height to measure them
+  const estimatedH = 52;
+  const layout = computeLayout(rootId, estimatedH);
+
+  canvas.innerHTML = '';
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.id='connector-svg';
+  svg.style.cssText='position:absolute;top:0;left:0;pointer-events:none;';
+  canvas.appendChild(svg);
+
+  placeNodes(canvas, layout, PAD, PAD);
+
+  // Size canvas
+  canvas.style.width  = (layout.subtreeW + PAD*2)+'px';
+  canvas.style.height = (layout.subtreeH + PAD*2)+'px';
+
+  // Pass 2: measure actual node heights, recompute layout, reposition
+  requestAnimationFrame(()=>{
+    // Measure heights
+    Object.keys(people).forEach(id=>{
+      const el=document.getElementById('node-'+id);
+      if(el) nodeHeights[id]=el.offsetHeight;
+    });
+
+    // Recompute with real heights — use average or per-node
+    // For simplicity use the most common height
+    // Use fixed NODE_H constant — CSS enforces fixed height so measuring
+    // individual nodes produces noise from text overflow, not real size variation
+    const layout2 = computeLayout(rootId, NODE_H);
+    canvas.innerHTML='';
+
+    const svg2 = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg2.id='connector-svg';
+    svg2.style.cssText='position:absolute;top:0;left:0;pointer-events:none;';
+    canvas.appendChild(svg2);
+
+    placeNodes(canvas, layout2, PAD, PAD);
+    fitNodeText();
+
+    canvas.style.width  = (layout2.subtreeW + PAD*2)+'px';
+    canvas.style.height = (layout2.subtreeH + PAD*2)+'px';
+    svg2.setAttribute('width',  layout2.subtreeW + PAD*2);
+    svg2.setAttribute('height', layout2.subtreeH + PAD*2);
+
+    drawConnectors(svg2, layout2, PAD, PAD, NODE_H);
+
+    renderLegend();
+    layoutBars();
+    updateHeaderSub();
+  });
+}
+
+function placeNodes(canvas, layout, ox, oy){
+  const id    = layout.id;
+  const p     = people[id];
+  if(!p) return; // guard against stale layout referencing deleted node
+  const state = nodeState[id]||'default';
+  const col   = NODE_STATES[state];
+  const kids  = visibleKids(id);
+  const lout  = getLayout(id);
+
+  const el = document.createElement('div');
+  el.className = 'node';
+  el.id = 'node-'+id;
+  el.style.cssText = `left:${ox+layout.x}px;top:${oy+layout.y}px;background:${col.bg};border-color:${col.border};color:${col.text};`;
+
+  const nm = document.createElement('div'); nm.className='node-name'; nm.textContent=(state==='agent'?'⬡ ':'')+p.name; el.appendChild(nm);
+  const ti = document.createElement('div'); ti.className='node-title'; ti.textContent=p.title; el.appendChild(ti);
+
+  if(kids.length>0){
+    const lb=document.createElement('button'); lb.className='layout-btn';
+    const _lbIcons = {h:'⇆', hs:'⇅s', v:'⇅', v2:'⇅2', h2:'⇆2'};
+    const _lbTitles = {h:'Horizontal', hs:'H+Sidebar', v:'Vertical', v2:'2-Column Vertical', h2:'2-Row Horizontal'};
+    lb.textContent = _lbIcons[lout] || '⇅';
+    lb.title = _lbTitles[lout] || lout;
+    lb.style.color=col.text;
+    lb.onclick=e=>{e.stopPropagation();toggleLayout(id);};
+    el.appendChild(lb);
+  }
+  el.onclick=e=>{e.stopPropagation();showMenu(id,el);};
+  canvas.appendChild(el);
+
+  layout.kids.forEach(kl=>{
+    placeNodes(canvas, kl, ox+layout.x+kl._offsetX-layout.x, oy+layout.y+kl._offsetY);
+  });
+}
+
+// Connector drawing — walk layout tree, draw lines
+function drawConnectors(svg, layout, ox, oy, nodeH){
+  const id   = layout.id;
+  const lout = getLayout(id);
+
+  const nx = ox + layout.x;
+  const ny = oy + layout.y;
+  const nh = nodeHeights[id] || nodeH;
+
+  if(lout === 'h' || lout === 'hs'){
+    // ── Horizontal: bus bar + elbow to each child top-centre ──
+    layout.kids.forEach(kl=>{
+      // Skip sidebar kids in hs mode — they're handled in the spine block below
+      if(lout==='hs' && kl._isSide) return;
+      const kox = ox + layout.x + kl._offsetX - layout.x;
+      const koy = oy + layout.y + kl._offsetY;
+      const kx  = kox + kl.x;
+      const ky  = koy + kl.y;
+      const cx  = kx + NODE_W/2;
+      const midY = (ny + nh) + vGap(0)/2;
+      if(lout !== 'hs') svgLine(svg, cx, midY, cx, ky);  // drop for pure-h (hs drops handled in spine block)
+      drawConnectors(svg, kl, kox, koy, nodeH);
+    });
+    // Shared horizontal bar + stem from parent
+    if(layout.kids.length > 0){
+      const py   = ny + nh;
+      const vg   = vGap(0);
+      const midY = py + vg/2;
+
+      // Stem drops from parent centre bottom to midY
+      svgLine(svg, nx + NODE_W/2, py, nx + NODE_W/2, midY);
+
+      if(lout === 'hs'){
+        // ── hs mode: bus bar spans bus kids only; sidebar gets L-spine from midY ──
+        const busOnly  = layout.kids.filter(k=>k._isBus);
+        const sideOnly = layout.kids.filter(k=>k._isSide);
+
+        // Bus horizontal bar (first bus kid centre → last bus kid centre)
+        if(busOnly.length > 0){
+          const fkl = busOnly[0];
+          const lkl = busOnly[busOnly.length-1];
+          const fox  = ox + layout.x + fkl._offsetX - layout.x;
+          const lox2 = ox + layout.x + lkl._offsetX - layout.x;
+          const fx   = fox  + fkl.x + NODE_W/2;
+          const lx   = lox2 + lkl.x + NODE_W/2;
+          // Extend bar from leftmost bus kid to the sidebar spine x
+          let barRight = lx;
+
+          // Sidebar spine x: use the layout's sideStartX which is the exact
+          // start of the sidebar column. The spine sits halfway into the hGap
+          // between bus section end and sidebar start — guaranteed clear of both.
+          let spineX = null;
+          if(sideOnly.length > 0 && layout.sideStartX !== undefined){
+            // layout.sideStartX is relative to the subtree origin (ox - layout.x offset already in ox)
+            const sideColAbsX = ox + layout.sideStartX; // absolute x of sidebar column left edge
+            // Bus section ends at ox + layout.busW
+            const busEndAbsX  = ox + (layout.busW || 0);
+            const gap = sideColAbsX - busEndAbsX;
+            spineX   = busEndAbsX + Math.round(gap / 2); // dead centre of the gap
+            barRight  = spineX;
+          } else if(sideOnly.length > 0){
+            // Fallback: use first sidebar node position
+            const firstSide = sideOnly[0];
+            const firstSideAbsX = ox + firstSide._offsetX + firstSide.x;
+            spineX   = firstSideAbsX - 20;
+            barRight  = spineX;
+          }
+
+          // Draw horizontal bar: from leftmost point (parent stem or first bus child) to spineX
+          svgLine(svg, Math.min(fx, nx+NODE_W/2), midY, barRight, midY);
+
+          // Drop lines from midY to each bus child top-centre
+          busOnly.forEach(kl=>{
+            const kox2 = ox + layout.x + kl._offsetX - layout.x;
+            const koy2 = oy + layout.y + kl._offsetY;
+            const kx2  = kox2 + kl.x;
+            const ky2  = koy2 + kl.y;
+            svgLine(svg, kx2 + NODE_W/2, midY, kx2 + NODE_W/2, ky2);
+          });
+
+          // Sidebar: spine drops from midY straight down to last sidebar child mid,
+          //          then L-arms branch right into each child's left edge — same
+          //          pattern as vertical layout Option A.
+          if(spineX !== null && sideOnly.length > 0){
+            const lastSide = sideOnly[sideOnly.length-1];
+            const lSky = oy + layout.y + lastSide._offsetY + lastSide.y;
+            const lSkh = nodeHeights[lastSide.id] || nodeH;
+            const spineBot = lSky + lSkh/2;
+
+            svgLine(svg, spineX, midY, spineX, spineBot); // continuous spine top→bottom
+
+            sideOnly.forEach(kl=>{
+              const kox2 = ox + layout.x + kl._offsetX - layout.x;
+              const koy2 = oy + layout.y + kl._offsetY;
+              const kx2  = kox2 + kl.x;   // left edge of child box
+              const ky2  = koy2 + kl.y;
+              const kh2  = nodeHeights[kl.id] || nodeH;
+              const armY = ky2 + kh2/2;         // vertical mid of child
+              svgLine(svg, spineX, armY, kx2, armY); // horizontal L-arm into left edge
+              drawConnectors(svg, kl, kox2, koy2, nodeH);
+            });
+          }
+        }
+
+      } else {
+        // ── Pure horizontal: bus bar across all children ──
+        if(layout.kids.length > 1){
+          const fkl = layout.kids[0];
+          const lkl = layout.kids[layout.kids.length-1];
+          const fox  = ox+layout.x+fkl._offsetX-layout.x;
+          const lox2 = ox+layout.x+lkl._offsetX-layout.x;
+          const fx   = fox  + fkl.x + NODE_W/2;
+          const lx   = lox2 + lkl.x + NODE_W/2;
+          svgLine(svg, fx, midY, lx, midY);
+        }
+      }
+    }
+
+  } else if(lout === 'v2'){
+    // ── Two-column vertical: parent → horizontal bar → two spines with L-arms ──
+    const SPINE_INSET = 16;
+    const leftKids  = layout.kids.filter(k=>k._col==='left');
+    const rightKids = layout.kids.filter(k=>k._col==='right');
+
+    if(layout.kids.length > 0){
+      const py   = ny + nh;
+      const vg   = vGap(nodeDepth(layout.id));
+      const midY = py + vg / 2;
+
+      // Stem from parent bottom to midY
+      svgLine(svg, nx + NODE_W/2, py, nx + NODE_W/2, midY);
+
+      // Helper: draw one column's spine + L-arms, spine starts at midY
+      function drawV2Spine(colKids){
+        if(!colKids.length) return;
+        const firstKl = colKids[0];
+        const lastKl  = colKids[colKids.length - 1];
+
+        // Absolute x of the first node's left edge
+        const firstAbsX = ox + firstKl._offsetX + firstKl.x;
+        const spineX    = firstAbsX + SPINE_INSET;
+
+        // Spine runs from midY down to the mid-height of the last child
+        const lastAbsY  = oy + lastKl._offsetY + lastKl.y;
+        const spineBot  = lastAbsY + nodeH / 2;
+        svgLine(svg, spineX, midY, spineX, spineBot);
+
+        // L-arm from spine into each child's left edge at child mid-height
+        colKids.forEach(kl => {
+          const kAbsX = ox + kl._offsetX + kl.x;
+          const kAbsY = oy + kl._offsetY + kl.y;
+          const armY  = kAbsY + nodeH / 2;
+          svgLine(svg, spineX, armY, kAbsX, armY);
+          drawConnectors(svg, kl, ox + kl._offsetX, oy + kl._offsetY, nodeH);
+        });
+      }
+
+      // Horizontal bar connecting both spine tops at midY
+      const lFirst = leftKids[0], rFirst = rightKids.length ? rightKids[0] : null;
+      if(lFirst && rFirst){
+        const lSpineX = ox + lFirst._offsetX + lFirst.x + SPINE_INSET;
+        const rSpineX = ox + rFirst._offsetX + rFirst.x + SPINE_INSET;
+        svgLine(svg, lSpineX, midY, rSpineX, midY);
+      }
+
+      drawV2Spine(leftKids);
+      drawV2Spine(rightKids);
+    }
+
+  } else if(lout === 'h2'){
+    // ── Two-row horizontal: two bus bars stacked ──
+    if(layout.kids.length > 0){
+      const py    = ny + nh;
+      const vg    = layout.vg || vGap(0);
+      const midY  = py + vg/2;
+      svgLine(svg, nx + NODE_W/2, py, nx + NODE_W/2, midY);
+
+      const row1Kids = layout.kids.filter(k=>k._row===1);
+      const row2Kids = layout.kids.filter(k=>k._row===2);
+      const rowGap   = layout.rowGap || Math.round(vg * 0.7);
+      const row1H    = layout.row1H  || 0;
+
+      function drawRow(rowKids, rowMidY){
+        if(!rowKids.length) return;
+        const f = rowKids[0], l = rowKids[rowKids.length-1];
+        const fox = ox + layout.x + f._offsetX - layout.x;
+        const lox = ox + layout.x + l._offsetX - layout.x;
+        const fx  = fox + f.x + NODE_W/2;
+        const lx  = lox + l.x + NODE_W/2;
+        // horizontal bar for this row
+        if(rowKids.length > 1) svgLine(svg, fx, rowMidY, lx, rowMidY);
+        rowKids.forEach(kl=>{
+          const kox = ox + layout.x + kl._offsetX - layout.x;
+          const koy = oy + layout.y + kl._offsetY;
+          svgLine(svg, kox + kl.x + NODE_W/2, rowMidY, kox + kl.x + NODE_W/2, koy + kl.y);
+          drawConnectors(svg, kl, kox, koy, nodeH);
+        });
+        // vertical stem connecting midY to this rowMidY
+        if(rowMidY !== midY) svgLine(svg, nx + NODE_W/2, midY, nx + NODE_W/2, rowMidY);
+      }
+
+      // Row 1 midY: same as midY (just below parent)
+      const row1MidY = midY;
+      // Row 2 midY: halfway between row1 bottom and row2 tops
+      const row2MidY = py + vg + row1H + rowGap/2;
+
+      // Draw vertical line connecting the two row midpoints
+      svgLine(svg, nx + NODE_W/2, row1MidY, nx + NODE_W/2, row2MidY);
+
+      drawRow(row1Kids, row1MidY);
+      drawRow(row2Kids, row2MidY);
+    }
+
+  } else {
+    // ── Vertical: Option A — single left-side spine + L-arms ──
+    const SPINE_INSET = 16;  // distance from parent left edge to the spine rail
+    const spineX = nx + SPINE_INSET;
+
+    if(layout.kids.length > 0){
+      // Draw the continuous spine from parent bottom down to the last child's arm y
+      const firstKl = layout.kids[0];
+      const lastKl  = layout.kids[layout.kids.length - 1];
+
+      const firstKoy = oy + layout.y + firstKl._offsetY;
+      const lastKoy  = oy + layout.y + lastKl._offsetY;
+      const lastKh   = nodeHeights[lastKl.id] || nodeH;
+      const spineTop = ny + nh;                        // bottom of parent box
+      const spineBot = lastKoy + lastKl.y + lastKh/2;  // mid of last child
+
+      svgLine(svg, spineX, spineTop, spineX, spineBot); // one continuous spine
+
+      // Horizontal arm from spine to each child's left edge, at child mid-height
+      layout.kids.forEach(kl=>{
+        const kox  = ox + layout.x + kl._offsetX - layout.x;
+        const koy  = oy + layout.y + kl._offsetY;
+        const kx   = kox + kl.x;
+        const ky   = koy + kl.y;
+        const kh   = nodeHeights[kl.id] || nodeH;
+        const armY = ky + kh/2;
+        const armX = kx;            // left edge of child box
+
+        svgLine(svg, spineX, armY, armX, armY); // horizontal arm
+
+        drawConnectors(svg, kl, kox, koy, nodeH);
+      });
+    }
+  }
+}
+
+function svgLine(svg,x1,y1,x2,y2){
+  const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+  l.setAttribute('x1',Math.round(x1)); l.setAttribute('y1',Math.round(y1));
+  l.setAttribute('x2',Math.round(x2)); l.setAttribute('y2',Math.round(y2));
+  l.setAttribute('stroke',STROKE); l.setAttribute('stroke-width',STROKE_W);
+  l.setAttribute('stroke-linecap','square');
+  svg.appendChild(l);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTEXT MENU
+// ─────────────────────────────────────────────────────────────────────────────
+function showMenu(id, nodeEl){
+  if(openMenuId===id){closeMenu();return;}
+  openMenuId=id;
+  const menu  = document.getElementById('ctx-menu');
+  const kids  = visibleKids(id);
+  const lout  = getLayout(id);
+  const cur   = nodeState[id]||'default';
+  const isCol = collapsed[id];
+
+  let h=`<div class="ctx-sec">Set State</div>`;
+  Object.entries(NODE_STATES).forEach(([k,v])=>{
+    h+=`<div class="ctx-item" style="${cur===k?'background:#f0f4ff':''}" onclick="setState('${id}','${k}')">
+      <span class="ctx-swatch" style="background:${v.bg};border-color:${v.border}"></span>${v.label}</div>`;
+  });
+  h+=`<div class="ctx-hr"></div>`;
+  if(kids.length>0){
+    h+=`<div class="ctx-sec" style="margin-top:4px">Layout</div>`;
+    const _layouts = [
+      {k:'h',  label:'⇆ Horizontal'},
+      {k:'h2', label:'⇆2 Two-Row Horizontal'},
+      {k:'hs', label:'⇅s H + Sidebar'},
+      {k:'v',  label:'⇅ Vertical'},
+      {k:'v2', label:'⇅2 Two-Column Vertical'},
+    ];
+    _layouts.forEach(({k, label}) => {
+      const active = lout===k ? 'background:#f0f4ff;font-weight:600;' : '';
+      h+=`<div class="ctx-act" style="${active}" onclick="setLayout('${id}','${k}')">${label}</div>`;
+    });
+    h+=`<div class="ctx-act" onclick="toggleCollapse('${id}')">${isCol?'▶ Expand':'▼ Collapse'} Children</div>`;
+  }
+  // Reorder siblings
+  if(id!==rootId){
+    const mgr=people[id].managerId;
+    const sibs=mgr?children[mgr]:[];
+    const pos=sibs.indexOf(id);
+    const canLeft  = pos>0;
+    const canRight = pos<sibs.length-1;
+    if(canLeft||canRight){
+      h+=`<div class="ctx-hr"></div>`;
+      h+=`<div class="ctx-sec">Reorder Among Siblings</div>`;
+      h+=`<div style="display:flex;gap:0;">
+        <div class="ctx-act" style="flex:1;justify-content:center;opacity:${canLeft?1:.3};pointer-events:${canLeft?'auto':'none'}" onclick="moveSibling('${id}',-1)">◀ Move Left</div>
+        <div class="ctx-act" style="flex:1;justify-content:center;opacity:${canRight?1:.3};pointer-events:${canRight?'auto':'none'}" onclick="moveSibling('${id}',1)">Move Right ▶</div>
+      </div>`;
+    }
+  }
+  h+=`<div class="ctx-hr"></div>`;
+  h+=`<div class="ctx-act" onclick="openEditModal('${id}')">✏️ Edit Name / Title</div>`;
+  if(id!==rootId) h+=`<div class="ctx-act" onclick="openMoveModal('${id}')">🔀 Move to Different Manager</div>`;
+  h+=`<div class="ctx-act" onclick="openAddModal('${id}')">➕ Add Direct Report</div>`;
+  h+=`<div class="ctx-act" onclick="openAddAgentModal('${id}')">🤖 Add AI Agent</div>`;
+  if(id!==rootId) h+=`<div class="ctx-act danger" onclick="removeNode('${id}')">🗑 Remove (incl. all reports)</div>`;
+
+  menu.innerHTML=h;
+  // Render off-screen first to measure actual height
+  menu.style.visibility='hidden';
+  menu.style.top='-9999px';
+  menu.style.left='-9999px';
+  menu.classList.add('open');
+  const nr=nodeEl.getBoundingClientRect();
+  const mh=menu.offsetHeight;
+  const mw=menu.offsetWidth||220;
+  const pad=6;
+  // Decide vertical position: prefer below node, flip above if it would clip
+  let top;
+  if(nr.bottom+pad+mh <= window.innerHeight){
+    top = nr.bottom+pad;
+  } else if(nr.top-pad-mh >= 0){
+    top = nr.top-pad-mh;
+  } else {
+    // Neither fits cleanly — anchor to bottom of viewport with padding
+    top = Math.max(pad, window.innerHeight-mh-pad);
+  }
+  // Horizontal: prefer aligning to node left, clamp to viewport
+  const left = Math.max(pad, Math.min(nr.left, window.innerWidth-mw-pad));
+  menu.style.top=top+'px';
+  menu.style.left=left+'px';
+  menu.style.visibility='';
+}
+
+function moveSibling(id, dir){
+  const mgr = people[id] && people[id].managerId;
+  if(!mgr) return;
+  const sibs = children[mgr];
+  const i = sibs.indexOf(id);
+  const j = i + dir;
+  if(j < 0 || j >= sibs.length) return;
+  // Swap
+  [sibs[i], sibs[j]] = [sibs[j], sibs[i]];
+  closeMenu();
+  render();
+}
+
+function closeMenu(){
+  openMenuId=null;
+  const m=document.getElementById('ctx-menu');
+  m.classList.remove('open'); m.innerHTML='';
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#ctx-menu')&&!e.target.closest('.node')) closeMenu();
+});
+
+function setState(id,k)     { nodeState[id]=k; closeMenu(); render(); }
+function toggleLayout(id){
+  const cur = getLayout(id);
+  const kids = visibleKids(id);
+  const hasDeep = kids.some(k => visibleKids(k).length > 0);
+  // Cycle: h → h2 → hs (if deep) → v → v2 → h
+  const cycle = hasDeep ? ['h','h2','hs','v','v2'] : ['h','h2','v','v2'];
+  const idx = cycle.indexOf(cur);
+  nodeLayout[id] = cycle[(idx + 1) % cycle.length];
+  closeMenu(); render();
+}
+function setLayout(id, mode){ nodeLayout[id]=mode; closeMenu(); render(); }
+function toggleCollapse(id) { collapsed[id]=!collapsed[id]; closeMenu(); render(); }
+function expandAll()        { Object.keys(collapsed).forEach(k=>collapsed[k]=false); render(); }
+function collapseAll()      { Object.keys(children).forEach(id=>{ if(id!==rootId&&visibleKids(id).length>0) collapsed[id]=true; }); render(); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOVE PERSON
+// ─────────────────────────────────────────────────────────────────────────────
+let moveTargetId=null, moveSelectedId=null;
+
+function openMoveModal(id){
+  closeMenu(); moveTargetId=id; moveSelectedId=null;
+  const p=people[id];
+  const desc=new Set(); function getD(n){(children[n]||[]).forEach(c=>{desc.add(c);getD(c);});} getD(id);
+  const opts=Object.values(people).filter(q=>q.id!==id&&!desc.has(q.id)).sort((a,b)=>a.name.localeCompare(b.name));
+  window._moveOpts=opts;
+
+  document.getElementById('modal-title').textContent='Move: '+p.name;
+  document.getElementById('modal-body').innerHTML=`
+    <p style="font-size:12px;color:#666;margin-bottom:8px;">Currently reports to: <strong>${people[p.managerId]?.name||'—'}</strong></p>
+    <input class="minput" id="move-q" placeholder="Filter by name…" oninput="filterMove(this.value)" style="margin-bottom:0">
+    <div id="move-list"></div>
+    <p id="move-lbl" style="font-size:11px;color:#219EBC;margin-top:6px;min-height:14px;"></p>`;
+  document.getElementById('modal-ok').textContent='Move';
+  document.getElementById('modal-ok').onclick=doMove;
+  document.getElementById('modal-overlay').classList.add('open');
+  renderMoveList(opts);
+  document.getElementById('move-q').focus();
+}
+
+function renderMoveList(opts){
+  document.getElementById('move-list').innerHTML=opts.map(o=>`
+    <div class="move-opt ${o.id===moveSelectedId?'selected':''}" onclick="pickMove('${o.id}')" data-id="${o.id}">
+      <div class="move-opt-name">${o.name}</div>
+      <div class="move-opt-title">${o.title}</div>
+    </div>`).join('');
+}
+function filterMove(v){
+  const q=v.toLowerCase();
+  renderMoveList(q?window._moveOpts.filter(o=>o.name.toLowerCase().includes(q)||o.title.toLowerCase().includes(q)):window._moveOpts);
+}
+function pickMove(id){
+  moveSelectedId=id;
+  document.querySelectorAll('.move-opt').forEach(el=>el.classList.toggle('selected',el.dataset.id===id));
+  document.getElementById('move-lbl').textContent=id?'→ New manager: '+people[id].name:'';
+}
+function doMove(){
+  if(!moveSelectedId){alert('Select a new manager.');return;}
+  const oldMgr=people[moveTargetId].managerId;
+  if(oldMgr&&children[oldMgr]) children[oldMgr]=children[oldMgr].filter(c=>c!==moveTargetId);
+  people[moveTargetId].managerId=moveSelectedId;
+  children[moveSelectedId]=children[moveSelectedId]||[];
+  children[moveSelectedId].push(moveTargetId);
+  toast(`✓ ${people[moveTargetId].name} → ${people[moveSelectedId].name}`);
+  closeModal(); render();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADD / EDIT / REMOVE
+// ─────────────────────────────────────────────────────────────────────────────
+let mMode=null, mTarget=null;
+
+function openAddAgentModal(mgrId){
+  closeMenu(); mMode='add-agent'; mTarget=mgrId;
+  document.getElementById('modal-title').textContent='Add AI Agent under '+people[mgrId].name;
+  document.getElementById('modal-body').innerHTML=`
+    <label class="mlabel">Agent Name</label>
+    <input class="minput" id="m-name" placeholder="e.g. Claims Processing Agent">
+    <label class="mlabel">Description (optional)</label>
+    <input class="minput" id="m-title" placeholder="e.g. Automates prior auth reviews">`;
+  document.getElementById('modal-ok').textContent='Add Agent';
+  document.getElementById('modal-ok').style.background='#1a6b63';
+  document.getElementById('modal-ok').onclick=commitAddEdit;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('m-name').focus();
+}
+function openAddModal(mgrId){
+  closeMenu(); mMode='add'; mTarget=mgrId;
+  document.getElementById('modal-title').textContent='Add Direct Report to '+people[mgrId].name;
+  document.getElementById('modal-body').innerHTML=`
+    <label class="mlabel">Name</label><input class="minput" id="m-name" placeholder="First Last">
+    <label class="mlabel">Title</label><input class="minput" id="m-title" placeholder="Job Title">`;
+  document.getElementById('modal-ok').textContent='Add';
+  document.getElementById('modal-ok').onclick=commitAddEdit;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('m-name').focus();
+}
+function openEditModal(id){
+  closeMenu(); mMode='edit'; mTarget=id;
+  const p=people[id];
+  document.getElementById('modal-title').textContent='Edit Person';
+  document.getElementById('modal-body').innerHTML=`
+    <label class="mlabel">Name</label><input class="minput" id="m-name" value="${p.name}">
+    <label class="mlabel">Title</label><input class="minput" id="m-title" value="${p.title}">`;
+  document.getElementById('modal-ok').textContent='Save';
+  document.getElementById('modal-ok').onclick=commitAddEdit;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('m-name').focus();
+}
+function commitAddEdit(){
+  const name=(document.getElementById('m-name')||{}).value?.trim();
+  const title=(document.getElementById('m-title')||{}).value?.trim()||'';
+  if(!name) return;
+  // Reset button color (may have been set by agent modal)
+  document.getElementById('modal-ok').style.background='';
+  if(mMode==='add'||mMode==='add-agent'){
+    const nid=(mMode==='add-agent'?'agent_':'c_')+Date.now();
+    people[nid]={id:nid,name,title,managerId:mTarget};
+    children[nid]=[]; children[mTarget]=children[mTarget]||[]; children[mTarget].push(nid);
+    if(mMode==='add-agent') nodeState[nid]='agent'; // auto-color teal
+  } else { people[mTarget].name=name; people[mTarget].title=title; }
+  closeModal(); render();
+}
+function removeNode(id){
+  if(id===rootId) return;
+  const n = countDesc(id);
+  const label = `Remove ${people[id].name}${n>0?' and '+n+' report(s) beneath them':''}?`;
+  showConfirmModal(label, () => {
+    function del(nid){(children[nid]||[]).forEach(del);delete people[nid];delete children[nid];delete nodeState[nid];delete nodeLayout[nid];delete collapsed[nid];}
+    const mgr = people[id].managerId;
+    if(mgr && children[mgr]) children[mgr] = children[mgr].filter(c => c !== id);
+    del(id); closeMenu(); render();
+  });
+}
+
+function showConfirmModal(message, onConfirm){
+  document.getElementById('modal-title').textContent = 'Confirm';
+  document.getElementById('modal-body').innerHTML =
+    `<p style="font-size:13px;color:#333;line-height:1.6;">${message}</p>`;
+  document.getElementById('modal-ok').textContent = 'Remove';
+  document.getElementById('modal-ok').style.background = '#c0392b';
+  document.getElementById('modal-ok').onclick = () => {
+    closeModal();
+    document.getElementById('modal-ok').style.background = '';
+    onConfirm();
+  };
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function countDesc(id){return (children[id]||[]).reduce((s,c)=>s+1+countDesc(c),0);}
+
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('modal-ok').onclick=null;
+  mMode=null; mTarget=null; moveTargetId=null; moveSelectedId=null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LEGEND / SEARCH / BARS
+// ─────────────────────────────────────────────────────────────────────────────
+function renderLegend(){
+  let h='<span class="lbl">Key:</span>';
+  Object.entries(NODE_STATES).forEach(([k,v])=>{
+    h+=`<div class="legend-item" onclick="filterByState('${k}')">
+      <div class="legend-swatch" style="background:${v.bg};border-color:${v.border}"></div>${v.label}</div>`;
+  });
+  h+=`<span id="legend-hint">Click node · ⇆/⇅ layout · 🔀 move · 🤖 AI agent</span>`;
+  document.getElementById('legend').innerHTML=h;
+}
+
+function layoutBars(){
+  const hH=document.getElementById('header').offsetHeight;
+  const lEl=document.getElementById('legend');
+  const sEl=document.getElementById('search-results');
+  const lH=lEl.style.display==='none'?0:lEl.offsetHeight;
+  const sH=sEl.style.display==='none'?0:sEl.offsetHeight;
+  lEl.style.top=hH+'px';
+  sEl.style.top=(hH+lH)+'px';
+  document.getElementById('canvas-wrap').style.top=(hH+lH+sH)+'px';
+}
+function onSearch(val){
+  const sr=document.getElementById('search-results');
+  if(!val.trim()){sr.style.display='none';layoutBars();return;}
+  const q=val.toLowerCase();
+  const hits=Object.values(people).filter(p=>p.name.toLowerCase().includes(q)||p.title.toLowerCase().includes(q));
+  sr.style.display='flex';
+  sr.innerHTML=hits.length
+    ?hits.map(p=>`<div class="sr-tag" onclick="scrollToNode('${p.id}')"><strong>${p.name}</strong> · ${p.title}</div>`).join('')
+    :'<span style="color:#999;font-size:11px">No matches</span>';
+  layoutBars();
+}
+function scrollToNode(id){
+  document.querySelectorAll('.node.highlighted').forEach(n=>n.classList.remove('highlighted'));
+  const el=document.getElementById('node-'+id); if(!el) return;
+  el.classList.add('highlighted');
+  el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+}
+function filterByState(k){const id=Object.keys(nodeState).find(i=>nodeState[i]===k);if(id)scrollToNode(id);}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAN
+// ─────────────────────────────────────────────────────────────────────────────
+(()=>{
+  // Mouse-wheel zoom (Ctrl+scroll or pinch)
+  document.getElementById('canvas-wrap').addEventListener('wheel', e=>{
+    if(e.ctrlKey || e.metaKey){
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -10 : 10;
+      zoomStep(delta);
+    }
+  }, { passive: false });
+})();
+
+(()=>{
+  const wrap=document.getElementById('canvas-wrap');
+  let drag=false,sx,sy,slx,sly;
+  wrap.addEventListener('mousedown',e=>{
+    if(e.target.closest('.node')||e.target.closest('#ctx-menu')||e.target.closest('#modal-overlay')) return;
+    drag=true; sx=e.clientX; sy=e.clientY; slx=wrap.scrollLeft; sly=wrap.scrollTop;
+    wrap.style.cursor='grabbing'; e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{if(!drag)return;wrap.scrollLeft=slx-(e.clientX-sx);wrap.scrollTop=sly-(e.clientY-sy);});
+  document.addEventListener('mouseup',()=>{drag=false;wrap.style.cursor='grab';});
+})();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SAVE / EXPORT / IMPORT
+// ─────────────────────────────────────────────────────────────────────────────
+function buildSnapshot(){
+  // Bake the effective layout for every node into nodeLayout before saving,
+  // so that loading always restores exactly what was visible — regardless of
+  // any future changes to autoLayout rules.
+  const frozenLayout = {};
+  Object.keys(people).forEach(id => { frozenLayout[id] = getLayout(id); });
+
+  const deletedIds = PEOPLE_DEF.map(p=>p.id).filter(id=>!people[id]);
+  const allPeople  = Object.fromEntries(Object.entries(people).map(([id,p])=>[id,{...p}]));
+  const allChildren= Object.fromEntries(Object.entries(children).map(([id,arr])=>[id,[...arr]]));
+  return {
+    version:5, savedAt:new Date().toISOString(),
+    nodeState, nodeLayout: frozenLayout, collapsed, vSpacingScale, hSpacingScale, zoomLevel,
+    deletedIds,
+    allPeople,
+    allChildren,
+  };
+}
+function applySnapshot(s){
+  // v5: restore full state directly — no reconstruction needed
+  if(s.version>=5 && s.allPeople && s.allChildren){
+    people   = Object.fromEntries(Object.entries(s.allPeople).map(([id,p])=>[id,{...p}]));
+    children = Object.fromEntries(Object.entries(s.allChildren).map(([id,arr])=>[id,[...arr]]));
+    nodeState = s.nodeState  || {};
+    nodeLayout= s.nodeLayout || {};
+    collapsed = s.collapsed  || {};
+    // Set rootId to whoever has no manager in the restored data
+    const restoredRoot = Object.values(people).find(p => !p.managerId);
+    if(restoredRoot) rootId = restoredRoot.id;
+    if(s.zoomLevel !== undefined){
+      zoomLevel = s.zoomLevel;
+      applyZoom();
+    }
+    if(s.vSpacingScale !== undefined){
+      vSpacingScale = s.vSpacingScale;
+      const vpct = Math.round(vSpacingScale*100);
+      const vsl = document.getElementById('vspacing-slider');
+      if(vsl){ vsl.value=vpct; document.getElementById('vspacing-val').textContent=vpct+'%'; }
+    }
+    if(s.hSpacingScale !== undefined){
+      hSpacingScale = s.hSpacingScale;
+      const hpct = Math.round(hSpacingScale*100);
+      const hsl = document.getElementById('hspacing-slider');
+      if(hsl){ hsl.value=hpct; document.getElementById('hspacing-val').textContent=hpct+'%'; }
+    }
+    return;
+  }
+
+  // Legacy v3/v4 fallback ────────────────────────────────────────────────────
+  initData();
+  nodeState=s.nodeState||{}; nodeLayout=s.nodeLayout||{}; collapsed=s.collapsed||{};
+
+  function deleteSubtree(nid){
+    (children[nid]||[]).forEach(deleteSubtree);
+    const mgr=people[nid]&&people[nid].managerId;
+    if(mgr&&children[mgr]) children[mgr]=children[mgr].filter(c=>c!==nid);
+    delete people[nid]; delete children[nid];
+    delete nodeState[nid]; delete nodeLayout[nid]; delete collapsed[nid];
+  }
+  (s.deletedIds||[]).forEach(id=>{ if(people[id]) deleteSubtree(id); });
+
+  Object.entries(s.editedPeople||{}).forEach(([id,p])=>{
+    if(!people[id]) return;
+    if(p.managerId&&p.managerId!==people[id].managerId){
+      const old=people[id].managerId;
+      if(old&&children[old]) children[old]=children[old].filter(c=>c!==id);
+      people[id].managerId=p.managerId;
+      children[p.managerId]=children[p.managerId]||[];
+      if(!children[p.managerId].includes(id)) children[p.managerId].push(id);
+    }
+    people[id].name=p.name; people[id].title=p.title;
+  });
+  Object.entries(s.customPeople||{}).forEach(([id,p])=>{
+    people[id]=p; children[p.managerId]=children[p.managerId]||[];
+    if(!children[p.managerId].includes(id)) children[p.managerId].push(id);
+    children[id]=s.customChildren?.[id]||[];
+  });
+}
+function exportJSON(){
+  const ts=new Date().toISOString().slice(0,10);
+  const blob=new Blob([JSON.stringify(buildSnapshot(),null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`OrgChart_${ts}.json`; a.click();
+  URL.revokeObjectURL(url); toast('✓ Exported OrgChart_'+ts+'.json');
+}
+function importJSON(evt){
+  const file=evt.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{try{applySnapshot(JSON.parse(e.target.result));render();setTimeout(zoomFit,120);toast('✓ '+file.name);}catch(err){alert('Error: '+err.message);}evt.target.value='';};
+  r.readAsText(file);
+}
+// ── Welcome screen ───────────────────────────────────────────────────────────
+function showWelcome(){
+  document.getElementById('welcome-overlay').classList.add('show');
+  hideWdDrilldown(); // always start at options view
+}
+function dismissWelcome(){
+  document.getElementById('welcome-overlay').classList.remove('show');
+}
+
+let _wdMode = 'single'; // 'single' or 'master'
+function showWdDrilldown(mode){
+  _wdMode = mode;
+  document.getElementById('welcome-options').classList.add('hidden');
+  document.getElementById('wd-drilldown').classList.add('open');
+  const sub = document.getElementById('wd-upload-sub');
+  if(mode === 'master'){
+    document.getElementById('wd-drilldown-title').textContent = 'Export the full org from Workday';
+    sub.textContent = 'Full org export — you\'ll pick a leader after loading';
+  } else {
+    document.getElementById('wd-drilldown-title').textContent = 'Export from Workday';
+    sub.textContent = 'My Org Chart or Org Chart export from Workday';
+  }
+}
+function hideWdDrilldown(){
+  document.getElementById('welcome-options').classList.remove('hidden');
+  document.getElementById('wd-drilldown').classList.remove('open');
+}
+function triggerWdUpload(){
+  if(_wdMode === 'master'){
+    document.getElementById('master-file-in').click();
+  } else {
+    document.getElementById('workday-file-in').click();
+  }
+}
+function loadSavedChart(){
+  const hasBrowserSave = !!localStorage.getItem('orgchart_v5');
+  if(hasBrowserSave){
+    // Show modal with browser vs JSON choice
+    // Annotate with saved date if available
+    try {
+      const snap = JSON.parse(localStorage.getItem('orgchart_v5'));
+      const savedAt = snap.savedAt ? new Date(snap.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : null;
+      document.getElementById('ls-browser-desc').textContent = savedAt ? `Last saved ${savedAt}` : 'Load your most recently saved chart';
+    } catch(e){}
+    document.getElementById('load-source-overlay').classList.add('open');
+  } else {
+    // No browser save — go straight to JSON picker
+    document.getElementById('welcome-json-in').click();
+  }
+}
+
+function closLoadSource(){
+  document.getElementById('load-source-overlay').classList.remove('open');
+}
+
+function loadFromBrowser(){
+  closLoadSource();
+  const raw = localStorage.getItem('orgchart_v5');
+  if(!raw){ toast('No browser save found.'); return; }
+  try {
+    applySnapshot(JSON.parse(raw));
+    render(); setTimeout(zoomFit,120);
+    dismissWelcome();
+    toast('✓ Loaded from browser');
+  } catch(e){ toast('⚠ Browser save could not be loaded.'); }
+}
+
+function loadFromJSON(){
+  closLoadSource();
+  document.getElementById('welcome-json-in').click();
+}
+
+function loadJSONFromWelcome(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  evt.target.value='';
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      applySnapshot(JSON.parse(e.target.result));
+      render();
+      dismissWelcome();
+      setTimeout(zoomFit, 120);
+      toast('✓ Loaded '+file.name);
+    } catch(err){ 
+      const errEl = document.getElementById('welcome-error');
+      if(errEl){ errEl.textContent='Could not load file: '+err.message; errEl.style.display='block'; }
+    }
+  };
+  r.readAsText(file);
+}
+
+// ── Workday XLSX parser (pure JS, no library — works with file:// URLs) ──────
+function flipName(raw){
+  if(!raw) return '';
+  const s = String(raw).trim();
+  let name;
+  if(s.includes(',')){
+    // "Last, First M" → "First M Last"
+    const comma = s.indexOf(',');
+    const last  = s.slice(0, comma).trim();
+    const rest  = s.slice(comma + 1).trim();
+    name = rest + ' ' + last;
+  } else {
+    name = s;
+  }
+  return normalizeName(name);
+}
+
+// Strip middle initials and normalize whitespace so
+// "First M Last" and "First Last" both match
+function normalizeName(name){
+  // Remove single-letter tokens (middle initials like "M" or "M.")
+  return name
+    .replace(/\s+[A-Z]\.?(?=\s|$)/g, '')  // " M." or " M" before space/end
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Minimal XLSX reader using central directory (handles data-descriptor ZIPs)
+async function parseXLSX(arrayBuffer){
+  const bytes = new Uint8Array(arrayBuffer);
+
+  function u16(pos){ return bytes[pos] | (bytes[pos+1]<<8); }
+  function u32(pos){ return bytes[pos] | (bytes[pos+1]<<8) | (bytes[pos+2]<<16) | (bytes[pos+3]<<24); }
+
+  // 1. Find End of Central Directory (search backwards from end)
+  let eocd = -1;
+  for(let i = bytes.length - 22; i >= 0; i--){
+    if(bytes[i]===0x50&&bytes[i+1]===0x4B&&bytes[i+2]===0x05&&bytes[i+3]===0x06){ eocd=i; break; }
+  }
+  if(eocd < 0) throw new Error('Not a valid ZIP/XLSX file.');
+
+  const cdOffset  = u32(eocd + 16);
+  const cdEntries = u16(eocd + 10);
+
+  // 2. Build central directory index: filename → {compSize, uncompSize, compMethod, localOffset}
+  const cdIndex = {};
+  let pos = cdOffset;
+  for(let e = 0; e < cdEntries; e++){
+    if(u32(pos) !== 0x02014b50) break;
+    const compMethod  = u16(pos + 10);
+    const compSize    = u32(pos + 20);
+    const uncompSize  = u32(pos + 24);
+    const fnLen       = u16(pos + 28);
+    const exLen       = u16(pos + 30);
+    const cmLen       = u16(pos + 32);
+    const localOffset = u32(pos + 42);
+    const fname       = new TextDecoder().decode(bytes.slice(pos+46, pos+46+fnLen));
+    cdIndex[fname]    = { compMethod, compSize, uncompSize, localOffset };
+    pos += 46 + fnLen + exLen + cmLen;
+  }
+
+  // 3. Extract a named file using sizes from central directory
+  async function extractFile(name){
+    const entry = cdIndex[name];
+    if(!entry) return null;
+    // Local header: skip to data (30 + fnLen + extLen)
+    const lFnLen  = u16(entry.localOffset + 26);
+    const lExLen  = u16(entry.localOffset + 28);
+    const dataStart = entry.localOffset + 30 + lFnLen + lExLen;
+    const compressed = bytes.slice(dataStart, dataStart + entry.compSize);
+    if(entry.compMethod === 0) return compressed; // stored, no compression
+    // deflate-raw
+    const ds = new DecompressionStream('deflate-raw');
+    const w  = ds.writable.getWriter();
+    w.write(compressed); w.close();
+    const chunks = []; const r = ds.readable.getReader();
+    while(true){ const {done,value} = await r.read(); if(done) break; chunks.push(value); }
+    const out = new Uint8Array(chunks.reduce((a,c)=>a+c.length,0));
+    let off=0; chunks.forEach(c=>{out.set(c,off);off+=c.length;});
+    return out;
+  }
+
+  const dec = new TextDecoder();
+
+  // 1. Read shared strings
+  const ssBytes = await extractFile('xl/sharedStrings.xml');
+  const ssXml   = ssBytes ? dec.decode(ssBytes) : '';
+  const sharedStrings = [];
+  const siRe = /<si>([\s\S]*?)<\/si>/g;
+  let m;
+  while((m = siRe.exec(ssXml)) !== null){
+    const text = m[1].replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#x[0-9A-Fa-f]+;/g, c=>String.fromCharCode(parseInt(c.slice(3,-1),16)));
+    sharedStrings.push(text);
+  }
+
+  // 2. Read workbook to find first sheet relationship
+  const wbBytes = await extractFile('xl/workbook.xml');
+  const wbXml   = wbBytes ? dec.decode(wbBytes) : '';
+  const sheetMatch = wbXml.match(/<sheet [^/]*r:id="(rId\d+)"/);
+  const rId = sheetMatch ? sheetMatch[1] : 'rId1';
+
+  // 3. Read workbook rels to resolve sheet path
+  const relBytes = await extractFile('xl/_rels/workbook.xml.rels');
+  const relXml   = relBytes ? dec.decode(relBytes) : '';
+  let sheetPath  = 'xl/worksheets/sheet1.xml'; // fallback
+  const relRe = new RegExp(`Id="${rId}"[^>]*Target="([^"]+)"`);
+  const relM  = relXml.match(relRe);
+  if(relM) sheetPath = 'xl/' + relM[1].replace(/^\//,'').replace(/^xl\//,'');
+
+  // 4. Read and parse sheet XML
+  const shBytes = await extractFile(sheetPath);
+  if(!shBytes) throw new Error('Could not find worksheet in file.');
+  const shXml = dec.decode(shBytes);
+
+  // Parse rows
+  const rows = [];
+  const rowRe = /<row [^>]*>([\s\S]*?)<\/row>/g;
+  let headerMap = null;
+
+  while((m = rowRe.exec(shXml)) !== null){
+    const rowXml = m[1];
+    const cells  = {};
+    const cellRe = /<c r="([A-Z]+)(\d+)"([^>]*)>([\s\S]*?)<\/c>/g;
+    let cm;
+    while((cm = cellRe.exec(rowXml)) !== null){
+      const col   = cm[1];
+      const attr  = cm[3];
+      const inner = cm[4];
+      let val = null;
+
+      if(attr.includes('t="inlineStr"') || attr.includes('t="str"')){
+        // Workday exports all text as inlineStr: <is><t>value</t></is>
+        const tMatch = inner.match(/<t[^>]*>([\s\S]*?)<\/t>/);
+        if(tMatch) val = tMatch[1];
+      } else if(attr.includes('t="s"')){
+        // Shared string reference
+        const vMatch = inner.match(/<v>([\s\S]*?)<\/v>/);
+        if(vMatch) val = sharedStrings[parseInt(vMatch[1])] || '';
+      } else {
+        // Plain numeric / date value
+        const vMatch = inner.match(/<v>([\s\S]*?)<\/v>/);
+        if(vMatch) val = vMatch[1];
+      }
+
+      if(val !== null) cells[col] = String(val).trim();
+    }
+
+    if(!headerMap){
+      // First row = headers
+      headerMap = {};
+      Object.entries(cells).forEach(([col, val]) => { headerMap[val] = col; });
+    } else {
+      const get = key => headerMap[key] ? (cells[headerMap[key]] || '') : '';
+      rows.push({
+        name:  get('Name'),
+        title: get('Business Title') || get('Line Detail 1'),
+        mgr:   get('Manager'),
+        uid:   get('Unique Identifier'),
+        mgrUid: get('Reports To'),
+      });
+    }
+  }
+
+  if(!rows.length) throw new Error('No data rows found.');
+
+  // Auto-detect format
+  const cols = Object.keys(headerMap);
+  let format = null;
+  if(cols.includes('Name') && cols.includes('Manager') && cols.includes('Business Title')){
+    format = 'myteam';
+  } else if(cols.includes('Name') && cols.includes('Reports To') && (cols.includes('Line Detail 1') || cols.includes('Unique Identifier'))){
+    format = 'dept';
+  }
+  if(!format) throw new Error(
+    'Unrecognized format. Expected either:\n' +
+    '• My Team Employment Data: columns Name, Manager, Business Title\n' +
+    '• Department export: columns Name, Reports To, Line Detail 1'
+  );
+
+  return { rows, format };
+}
+
+function loadWorkday(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  evt.target.value = '';
+
+  const errEl = document.getElementById('welcome-error');
+  if(errEl){ errEl.style.display='none'; errEl.textContent=''; }
+
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const { rows, format } = await parseXLSX(e.target.result);
+
+      let parsed = [];
+      const nameToId = {};
+
+      if(format === 'myteam'){
+        // "My Team Employment Data" format — name matching
+        rows.forEach((r, i) => {
+          const name  = flipName(r.name);
+          const title = r.title;
+          const mgr   = flipName(r.mgr);
+          const id    = 'wd_' + i;
+          if(name){ nameToId[name] = id; }
+          parsed.push({ id, name, title, mgrName: mgr, managerId: null });
+        });
+        parsed = parsed.filter(p => p.name);
+
+      } else if(format === 'dept'){
+        // Department export — uses Unique Identifier + Reports To ID
+        const idMap = {}; // uniqueId → wd_i
+
+        // First pass: register all rows
+        const rawParsed = [];
+        rows.forEach((r, i) => {
+          const uid       = (r.uid || '').trim();
+          const name      = (r.name || '').trim();
+          const title     = (r.title || '').trim();
+          const reportsTo = (r.mgrUid || '').trim();
+          const id = 'wd_' + i;
+          if(uid) idMap[uid] = id;
+          rawParsed.push({ id, uid, name, title, _reportsToUid: reportsTo, managerId: null });
+        });
+
+        // Resolve UIDs to internal IDs
+        rawParsed.forEach(p => {
+          if(p._reportsToUid && idMap[p._reportsToUid]){
+            p.managerId = idMap[p._reportsToUid];
+          }
+        });
+
+        // Find the root (blank reportsTo)
+        const deptRoot = rawParsed.find(p => !p._reportsToUid);
+
+        // Filter out Workday "inherited department" ghost entries:
+        // These are rows where the person reports to themselves (same name+title
+        // as someone already seen, or managerId resolves to a person with the
+        // same name). Keep only the first occurrence of each name.
+        const seenNames = new Set();
+        rawParsed.forEach(p => {
+          if(!p.name) return;
+          // Skip if this is a duplicate name reporting to a person with the same name
+          // (Workday inherited-dept artifact)
+          const mgr = rawParsed.find(r => r.id === p.managerId);
+          const isSelfReport = mgr && mgr.name === p.name;
+          const isDuplicateName = seenNames.has(p.name) && isSelfReport;
+          if(!isDuplicateName){
+            seenNames.add(p.name);
+            parsed.push(p);
+            if(p.name) nameToId[p.name] = p.id;
+          }
+        });
+      }
+
+      // Build temp tree using ALL manager name references — including names
+      // that appear only in the Manager column (e.g. the report runner)
+      const tempChildren = {};
+      const tempParent   = {};
+      const managerNameCount = {}; // how many direct reports each manager name has
+
+      // First pass: register all known people by ID
+      parsed.forEach(p => { tempChildren[p.id] = []; });
+
+      // Count how often each manager name appears
+      parsed.forEach(p => {
+        if(p.mgrName) managerNameCount[p.mgrName] = (managerNameCount[p.mgrName]||0) + 1;
+      });
+
+      // Resolve manager IDs
+      // dept format: managerId already set from UID; myteam: resolve by name
+      parsed.forEach(p => {
+        if(format === 'myteam'){
+          p.managerId = nameToId[p.mgrName] || null;
+        }
+        if(p.managerId && tempChildren[p.managerId]){
+          tempChildren[p.managerId].push(p.id);
+          tempParent[p.id] = p.managerId;
+        }
+      });
+
+      // Shared memoized descendant counter
+      const memo = {};
+      function countDescM(id){
+        if(memo[id]!==undefined) return memo[id];
+        memo[id] = (tempChildren[id]||[]).reduce((s,c) => s + 1 + countDescM(c), 0);
+        return memo[id];
+      }
+
+      // Follow any person up to their topmost ancestor within the dataset
+      function findRoot(id){
+        let cur = id, seen = new Set();
+        while(tempParent[cur] && !seen.has(cur)){ seen.add(cur); cur = tempParent[cur]; }
+        return cur;
+      }
+
+      // Unique roots: people with no parent in dataset
+      const rootSet  = new Set(parsed.map(p => findRoot(p.id)));
+      const allRoots = [...rootSet].map(id => parsed.find(p => p.id === id)).filter(Boolean);
+
+      // SPECIAL CASE: if the actual top-of-org (e.g. the report runner) doesn't
+      // appear as an employee row but IS referenced as manager by many people,
+      // synthesize a root node for them.
+      // Find manager names NOT in nameToId that have the most direct references
+      const missingManagers = Object.entries(managerNameCount)
+        .filter(([name]) => !nameToId[name])
+        .sort((a,b) => b[1] - a[1]);
+
+      console.log('Org root candidates (in dataset):', allRoots.map(p=>({name:p.name, count:countDescM(p.id)})));
+      console.log('Manager names NOT in dataset:', missingManagers.slice(0,5));
+
+      // If the top missing manager has more direct reports than the top in-dataset root,
+      // synthesize them as root and re-parent their direct reports
+      const topMissingName  = missingManagers[0]?.[0];
+      const topMissingCount = missingManagers[0]?.[1] || 0;
+      const topInDataset    = allRoots.sort((a,b) => countDescM(b.id)-countDescM(a.id))[0];
+      const topInCount      = topInDataset ? countDescM(topInDataset.id) : 0;
+
+      let root, finalTempChildren = tempChildren;
+
+      // Use direct-report count (managerNameCount) for missing managers,
+      // but for in-dataset candidates use their direct children count (not full subtree)
+      // This correctly identifies the org head (most direct reports) vs deep subtree owners
+      const topInByDirects = allRoots.sort((a,b) =>
+        (tempChildren[b.id]||[]).length - (tempChildren[a.id]||[]).length
+      )[0];
+      const topInDirectCount = topInByDirects ? (tempChildren[topInByDirects.id]||[]).length : 0;
+
+      console.log('Top missing manager:', topMissingName, 'direct refs:', topMissingCount);
+      console.log('Top in-dataset by directs:', topInByDirects?.name, 'directs:', topInDirectCount);
+
+      if(topMissingName && topMissingCount > topInDirectCount){
+        // Synthesize the missing root
+        const synthId = 'synth_root';
+        const synthPerson = { id: synthId, name: topMissingName, title: '', managerId: null };
+        parsed.push(synthPerson);
+        nameToId[topMissingName] = synthId;
+        tempChildren[synthId] = [];
+
+        // Re-parent anyone whose manager was this missing name
+        parsed.forEach(p => {
+          if(p.mgrName === topMissingName && p.id !== synthId){
+            p.managerId = synthId;
+            tempChildren[synthId].push(p.id);
+            tempParent[p.id] = synthId;
+          }
+        });
+        delete memo[synthId]; // reset memo for new node
+        root = synthPerson;
+        toast('ℹ Root "' + topMissingName + '" synthesized (not in Workday export rows)');
+      } else if(topInDataset){
+        root = topInDataset;
+      } else {
+        // Last resort: show picker
+        const sortedRoots = allRoots.sort((a,b) => countDescM(b.id)-countDescM(a.id));
+        showRootPicker(sortedRoots, (chosenId) => {
+          const chosenRoot = sortedRoots.find(p => p.id === chosenId);
+          buildOrgFromRoot(chosenRoot, parsed, tempChildren, file);
+        });
+        return;
+      }
+
+      buildOrgFromRoot(root, parsed, tempChildren, file);
+    } catch(err){
+      const msg = 'Could not parse file: ' + err.message;
+      const errEl2 = document.getElementById('welcome-error');
+      if(errEl2){ errEl2.textContent=msg; errEl2.style.display='block'; }
+      toast('⚠ ' + msg);
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function buildOrgFromRoot(root, parsed, tempChildren, file, includeContingent=true, levels=null){
+  function collectTree(id, set, depth){
+    set.add(id);
+    if(levels !== null && depth >= levels) return set;
+    (tempChildren[id]||[]).forEach(c => collectTree(c, set, depth+1));
+    return set;
+  }
+  const treeIds = collectTree(root.id, new Set(), 0);
+  let filteredParsed = parsed.filter(p => treeIds.has(p.id));
+
+  if(!includeContingent){
+    filteredParsed = filteredParsed.filter(p => !isContingent(p));
+  }
+
+  people={};children={};nodeState={};nodeLayout={};collapsed={};
+  rootId = root.id;
+  filteredParsed.forEach(p => {
+    people[p.id]   = { id:p.id, name:p.name, title:p.title, managerId:p.managerId };
+    children[p.id] = [];
+  });
+  filteredParsed.forEach(p => {
+    if(p.managerId && children[p.managerId]) children[p.managerId].push(p.id);
+  });
+
+  dismissWelcome();
+  hideRootPicker();
+  render();
+  setTimeout(zoomFit, 120);
+  const total = filteredParsed.length;
+  const lvlNote = levels !== null ? (', ' + levels + ' level' + (levels===1?'':'s')) : '';
+  const cNote   = !includeContingent ? ', contingent excluded' : '';
+  toast('✓ Loaded ' + total + ' people' + lvlNote + cNote);
+}
+
+// ── Help modal ───────────────────────────────────────────────────────────────
+function showHelp(){
+  document.getElementById('help-overlay').classList.add('open');
+}
+function hideHelp(){
+  document.getElementById('help-overlay').classList.remove('open');
+}
+function helpOverlayClick(e){
+  if(e.target===document.getElementById('help-overlay')) hideHelp();
+}
+
+// ── Zoom ─────────────────────────────────────────────────────────────────────
+let zoomLevel = 100; // percent
+
+function applyZoom(){
+  const canvas = document.getElementById('canvas');
+  canvas.style.transform = `scale(${zoomLevel/100})`;
+  // Update scroll container size to match scaled content
+  // (transform doesn't change layout flow, so we set explicit size)
+  const w = canvas.scrollWidth  * (zoomLevel/100);
+  const h = canvas.scrollHeight * (zoomLevel/100);
+  canvas.style.width  = '';
+  canvas.style.height = '';
+  document.getElementById('zoom-val').textContent = zoomLevel + '%';
+}
+
+function zoomStep(delta){
+  zoomLevel = Math.max(20, Math.min(150, zoomLevel + delta));
+  applyZoom();
+}
+
+function zoomFit(){
+  const wrap   = document.getElementById('canvas-wrap');
+  const canvas = document.getElementById('canvas');
+  // Reset zoom to measure natural size
+  canvas.style.transform = 'scale(1)';
+  const cw = canvas.scrollWidth;
+  const ch = canvas.scrollHeight;
+  const ww = wrap.clientWidth;
+  const wh = wrap.clientHeight;
+  const scaleW = ww / cw;
+  const scaleH = wh / ch;
+  const scale  = Math.min(scaleW, scaleH, 1); // never zoom in beyond 100%
+  zoomLevel = Math.max(40, Math.round(scale * 100));
+  applyZoom();
+  // Scroll to top-left after fitting
+  wrap.scrollLeft = 0;
+  wrap.scrollTop  = 0;
+}
+
+function exportPNG(){
+  // Re-render the chart onto an HTML5 Canvas — works offline, no CDN needed.
+  // We use the existing layout + NODE_STATES data and draw everything manually.
+
+  if(!people[rootId]){ toast('No chart to export.'); return; }
+
+  const SCALE   = 2;       // retina 2x
+  const FONT    = 'IBM Plex Sans, system-ui, sans-serif';
+  const CONN    = 'rgba(2,48,71,0.28)';
+
+  // Compute layout at natural size
+  const layout  = computeLayout(rootId, NODE_H);
+  const W       = (layout.subtreeW + PAD * 2) * SCALE;
+  const H       = (layout.subtreeH + PAD * 2) * SCALE;
+
+  const cv = document.createElement('canvas');
+  cv.width  = W;
+  cv.height = H;
+  const ctx = cv.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+
+  // White background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W / SCALE, H / SCALE);
+
+  // ── Draw connectors ──────────────────────────────────────────────────────
+  function line(x1, y1, x2, y2){
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  }
+
+  function drawConnsCanvas(layout, ox, oy){
+    const id   = layout.id;
+    const lout = getLayout(id);
+    const nx   = ox + layout.x;
+    const ny   = oy + layout.y;
+    const nh   = NODE_H;
+
+    if(lout === 'h' || lout === 'hs'){
+      const busOnly  = lout==='hs' ? layout.kids.filter(k=>k._isBus)  : layout.kids;
+      const sideOnly = lout==='hs' ? layout.kids.filter(k=>k._isSide) : [];
+
+      if(layout.kids.length > 0){
+        const py   = ny + nh;
+        const midY = py + vGap(0)/2;
+        line(nx + NODE_W/2, py, nx + NODE_W/2, midY);
+
+        if(busOnly.length > 0){
+          const fkl = busOnly[0];
+          const lkl = busOnly[busOnly.length-1];
+          const fox  = ox + layout.x + fkl._offsetX - layout.x;
+          const lox2 = ox + layout.x + lkl._offsetX - layout.x;
+
+          let barLeft  = fox + fkl.x + NODE_W/2;
+          let barRight = lox2 + lkl.x + NODE_W/2;
+
+          let spineX = null;
+          if(sideOnly.length > 0){
+            const fs = sideOnly[0];
+            spineX = (ox + layout.x + fs._offsetX - layout.x) + fs.x - 10;
+            barRight = spineX;
+          }
+
+          line(Math.min(barLeft, nx+NODE_W/2), midY, barRight, midY);
+          busOnly.forEach(kl=>{
+            const kox2 = ox + layout.x + kl._offsetX - layout.x;
+            const koy2 = oy + layout.y + kl._offsetY;
+            line(kox2 + kl.x + NODE_W/2, midY, kox2 + kl.x + NODE_W/2, koy2 + kl.y);
+            drawConnsCanvas(kl, kox2, koy2);
+          });
+
+          if(spineX !== null && sideOnly.length > 0){
+            const ls = sideOnly[sideOnly.length-1];
+            const lSky = oy + layout.y + ls._offsetY + ls.y;
+            line(spineX, midY, spineX, lSky + NODE_H/2);
+            sideOnly.forEach(kl=>{
+              const kox2 = ox + layout.x + kl._offsetX - layout.x;
+              const koy2 = oy + layout.y + kl._offsetY;
+              const armY = koy2 + kl.y + NODE_H/2;
+              line(spineX, armY, kox2 + kl.x, armY);
+              drawConnsCanvas(kl, kox2, koy2);
+            });
+          }
+        }
+      }
+    } else if(lout === 'v2'){
+      const SPINE_INSET = 16;
+      const leftKids  = layout.kids.filter(k=>k._col==='left');
+      const rightKids = layout.kids.filter(k=>k._col==='right');
+      const py   = ny + nh;
+      const midY = py + vGap(0)/2;
+      line(nx + NODE_W/2, py, nx + NODE_W/2, midY);
+      const lFirst = leftKids[0], rFirst = rightKids[0];
+      if(lFirst && rFirst){
+        const lKox = ox + layout.x + lFirst._offsetX - layout.x;
+        const rKox = ox + layout.x + rFirst._offsetX - layout.x;
+        const lSX = lKox + lFirst.x + SPINE_INSET;
+        const rSX = rKox + rFirst.x + SPINE_INSET;
+        line(lSX, midY, rSX, midY);
+      }
+      [leftKids, rightKids].forEach(colKids => {
+        if(!colKids.length) return;
+        const f = colKids[0], l = colKids[colKids.length-1];
+        const fKox = ox + layout.x + f._offsetX - layout.x;
+        const lKox = ox + layout.x + l._offsetX - layout.x;
+        const spineX = fKox + f.x + SPINE_INSET;
+        line(spineX, midY, spineX, lKox + l.y + NODE_H/2);
+        colKids.forEach(kl=>{
+          const kox2 = ox + layout.x + kl._offsetX - layout.x;
+          const koy2 = oy + layout.y + kl._offsetY;
+          line(spineX, koy2 + kl.y + NODE_H/2, kox2 + kl.x, koy2 + kl.y + NODE_H/2);
+          drawConnsCanvas(kl, kox2, koy2);
+        });
+      });
+    } else if(lout === 'h2'){
+      const py    = ny + nh;
+      const vg    = layout.vg || vGap(0);
+      const midY  = py + vg/2;
+      const row1H = layout.row1H || 0;
+      const rowGap= layout.rowGap || Math.round(vg*0.7);
+      const row1  = layout.kids.filter(k=>k._row===1);
+      const row2  = layout.kids.filter(k=>k._row===2);
+      const row2MidY = py + vg + row1H + rowGap/2;
+      line(nx + NODE_W/2, py, nx + NODE_W/2, row2MidY);
+      [row1, row2].forEach((rowKids, ri) => {
+        if(!rowKids.length) return;
+        const rowMidY = ri===0 ? midY : row2MidY;
+        const f = rowKids[0], l = rowKids[rowKids.length-1];
+        const fox = ox + layout.x + f._offsetX - layout.x;
+        const lox = ox + layout.x + l._offsetX - layout.x;
+        if(rowKids.length>1) line(fox+f.x+NODE_W/2, rowMidY, lox+l.x+NODE_W/2, rowMidY);
+        rowKids.forEach(kl=>{
+          const kox2 = ox + layout.x + kl._offsetX - layout.x;
+          const koy2 = oy + layout.y + kl._offsetY;
+          line(kox2+kl.x+NODE_W/2, rowMidY, kox2+kl.x+NODE_W/2, koy2+kl.y);
+          drawConnsCanvas(kl, kox2, koy2);
+        });
+      });
+    } else {
+      // Vertical
+      const SPINE_INSET = 16;
+      const spineX = nx + SPINE_INSET;
+      if(layout.kids.length > 0){
+        const lastKl  = layout.kids[layout.kids.length-1];
+        const lKoy    = oy + layout.y + lastKl._offsetY;
+        const spineBot= lKoy + lastKl.y + NODE_H/2;
+        line(spineX, ny + nh, spineX, spineBot);
+        layout.kids.forEach(kl=>{
+          const kox2 = ox + layout.x + kl._offsetX - layout.x;
+          const koy2 = oy + layout.y + kl._offsetY;
+          const armY = koy2 + kl.y + NODE_H/2;
+          line(spineX, armY, kox2 + kl.x, armY);
+          drawConnsCanvas(kl, kox2, koy2);
+        });
+      }
+    }
+  }
+
+  ctx.strokeStyle = CONN;
+  ctx.lineWidth   = 1.5;
+  drawConnsCanvas(layout, PAD, PAD);
+
+  // ── Draw nodes ──────────────────────────────────────────────────────────
+  function drawNodesCanvas(layout, ox, oy){
+    const id    = layout.id;
+    const p     = people[id];
+    if(!p) return;
+    const state = nodeState[id] || 'default';
+    const col   = NODE_STATES[state];
+    const nx    = ox + layout.x;
+    const ny    = oy + layout.y;
+
+    // Box
+    ctx.fillStyle   = col.bg;
+    ctx.strokeStyle = col.border;
+    ctx.lineWidth   = 1.5;
+    ctx.beginPath();
+    ctx.rect(nx, ny, NODE_W, NODE_H);
+    ctx.fill(); ctx.stroke();
+
+    // Name
+    ctx.fillStyle = col.text;
+    ctx.font      = `700 11px ${FONT}`;
+    ctx.textBaseline = 'top';
+    const maxW = NODE_W - 14;
+    let nameText = p.name;
+    // Truncate if too wide
+    while(ctx.measureText(nameText).width > maxW && nameText.length > 1)
+      nameText = nameText.slice(0, -1);
+    if(nameText !== p.name) nameText += '…';
+    ctx.fillText(nameText, nx + 8, ny + 10);
+
+    // Title
+    ctx.font = `400 9px ${FONT}`;
+    ctx.globalAlpha = 0.72;
+    let titleText = p.title;
+    while(ctx.measureText(titleText).width > maxW && titleText.length > 1)
+      titleText = titleText.slice(0, -1);
+    if(titleText !== p.title) titleText += '…';
+    ctx.fillText(titleText, nx + 8, ny + 26);
+    ctx.globalAlpha = 1;
+
+    layout.kids.forEach(kl => {
+      drawNodesCanvas(kl, ox + layout.x + kl._offsetX - layout.x, oy + layout.y + kl._offsetY);
+    });
+  }
+
+  drawNodesCanvas(layout, PAD, PAD);
+
+  // ── Download ─────────────────────────────────────────────────────────────
+  cv.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.download = 'OrgChart.png';
+    a.href     = url;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('✓ PNG exported');
+  }, 'image/png');
+}
+
+// ── Auto-shrink node name text to fit ────────────────────────────────────────
+function fitNodeText(){
+  const NODE_INNER_W = 175 - 11 - 28 - 4; // node width minus padding and button space
+  const MIN_SIZE = 8;
+  const MAX_SIZE = 12;
+  document.querySelectorAll('.node-name').forEach(el => {
+    el.style.fontSize = MAX_SIZE + 'px';
+    let size = MAX_SIZE;
+    while(el.scrollWidth > NODE_INNER_W + 2 && size > MIN_SIZE){
+      size -= 0.5;
+      el.style.fontSize = size + 'px';
+    }
+  });
+}
+
+// ── Root picker ───────────────────────────────────────────────────────────────
+let _pickerCallback = null;
+let _pickerRoots    = null;
+let _pickerParsed   = null;
+let _pickerChildren = null;
+let _pickerFile     = null;
+
+function showRootPicker(sortedRoots, callback){
+  _pickerCallback = callback;
+  const sel = document.getElementById('root-picker-select');
+  sel.innerHTML = sortedRoots.map(p =>
+    `<option value="${p.id}">${p.name} — ${p.title}</option>`
+  ).join('');
+  document.getElementById('root-picker-overlay').style.display = 'flex';
+}
+
+function hideRootPicker(){
+  document.getElementById('root-picker-overlay').style.display = 'none';
+}
+
+function confirmRootPicker(){
+  const id = document.getElementById('root-picker-select').value;
+  if(_pickerCallback) _pickerCallback(id);
+}
+
+// ── Leader-picker (master org XLSX) ──────────────────────────────────────────
+let _lpParsed       = null;  // full parsed array from master XLSX
+let _lpTempChildren = null;  // tempChildren map
+let _lpFile         = null;  // File reference for toast
+let _lpLeaders      = [];    // sorted leader list shown in modal
+let _lpFiltered     = [];    // currently filtered subset
+
+// ── Load master org from repo URLs (one fetch per department, merged) ────────
+async function loadMasterFromRepo(){
+  dismissWelcome();
+  document.getElementById('leader-picker-list').innerHTML =
+    '<div id="leader-picker-loading">Loading org data…</div>';
+  document.getElementById('leader-picker-search').value = '';
+  showLeaderPicker();
+
+  try {
+    const buffers = await Promise.all(MASTER_ORG_FILES.map(async f => {
+      const resp = await fetch(f.url);
+      if(!resp.ok) throw new Error('fetch_failed');
+      return { label: f.label, buffer: await resp.arrayBuffer() };
+    }));
+    await _parseMasterBuffers(buffers);
+  } catch(err){
+    // Running offline (file://) or a file isn't in the repo yet —
+    // fall back to prompting for each department file in turn.
+    _lpFallbackBuffers = [];
+    _startMasterFallback(0);
+  }
+}
+
+// Prompt for each MASTER_ORG_FILES entry in sequence, then merge once all are in.
+let _lpFallbackBuffers = [];
+function _startMasterFallback(index){
+  if(index >= MASTER_ORG_FILES.length){
+    _parseMasterBuffers(_lpFallbackBuffers).catch(err => {
+      document.getElementById('leader-picker-list').innerHTML =
+        `<div style="padding:24px;text-align:center;color:#c0392b;font-size:13px;">⚠ ${err.message}</div>`;
+    });
+    return;
+  }
+  const f = MASTER_ORG_FILES[index];
+  const stepNote = MASTER_ORG_FILES.length > 1 ? ` (file ${index+1} of ${MASTER_ORG_FILES.length})` : '';
+  document.getElementById('leader-picker-list').innerHTML = `
+    <div style="padding:28px 24px;text-align:center;">
+      <div style="font-size:22px;margin-bottom:10px;">📂</div>
+      <div style="font-size:13px;font-weight:600;color:#023047;margin-bottom:6px;">Running offline?</div>
+      <div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:18px;">
+        The org data files couldn't be loaded automatically.<br>
+        Select <b>${f.label} Department.xlsx</b> from your computer${stepNote}.
+      </div>
+      <button onclick="document.getElementById('master-fallback-in').click()"
+        style="background:#023047;color:#fff;border:none;padding:9px 20px;border-radius:7px;
+               font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+        Select file…
+      </button>
+      <input type="file" id="master-fallback-in" accept=".xlsx,.xls" style="display:none"
+             onchange="_handleMasterFallbackFile(event)">
+    </div>`;
+}
+function _handleMasterFallbackFile(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  evt.target.value = '';
+  const index = _lpFallbackBuffers.length;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _lpFallbackBuffers.push({ label: MASTER_ORG_FILES[index].label, buffer: e.target.result });
+    _startMasterFallback(index + 1);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Parse one file's rows into people with globally-unique ids (idPrefix keeps
+// ids from colliding when multiple files are merged) and an optional dept tag.
+function _rowsToPeople(rows, format, idPrefix, dept){
+  let people = [];
+
+  if(format === 'myteam'){
+    const nameToId = {};
+    rows.forEach((r, i) => {
+      const name = flipName(r.name), title = r.title, mgr = flipName(r.mgr), id = idPrefix + i;
+      if(name) nameToId[name] = id;
+      people.push({ id, name, title, mgrName: mgr, managerId: null, dept });
+    });
+    people = people.filter(p => p.name);
+    people.forEach(p => { p.managerId = nameToId[p.mgrName] || null; });
+  } else if(format === 'dept'){
+    const idMap = {}, rawParsed = [];
+    rows.forEach((r, i) => {
+      const uid = (r.uid||'').trim(), name = (r.name||'').trim(),
+            title = (r.title||'').trim(), reportsTo = (r.mgrUid||'').trim(), id = idPrefix + i;
+      if(uid) idMap[uid] = id;
+      rawParsed.push({ id, uid, name, title, _reportsToUid: reportsTo, managerId: null, dept });
+    });
+    rawParsed.forEach(p => { if(p._reportsToUid && idMap[p._reportsToUid]) p.managerId = idMap[p._reportsToUid]; });
+    const seenNames = new Set();
+    rawParsed.forEach(p => {
+      if(!p.name) return;
+      const mgr = rawParsed.find(r => r.id === p.managerId);
+      if(!(seenNames.has(p.name) && mgr && mgr.name === p.name)){
+        seenNames.add(p.name); people.push(p);
+      }
+    });
+  }
+
+  return people;
+}
+
+function _finishMasterParse(parsed, fileLabel){
+  const tempChildren = {};
+  parsed.forEach(p => { tempChildren[p.id] = []; });
+  parsed.forEach(p => {
+    if(p.managerId && tempChildren[p.managerId]) tempChildren[p.managerId].push(p.id);
+  });
+
+  _lpParsed = parsed; _lpTempChildren = tempChildren; _lpFile = { name: fileLabel };
+  _lpLeaders = buildLeaderList(parsed, tempChildren);
+  _lpFiltered = _lpLeaders.slice();
+
+  if(!_lpLeaders.length) throw new Error('No people with direct reports found.');
+  renderLeaderRows(_lpFiltered);
+}
+
+// Single-file parse — used by the manual "upload your own full org export" flow.
+async function _parseMasterBuffer(arrayBuffer, file){
+  const { rows, format } = await parseXLSX(arrayBuffer);
+  const parsed = _rowsToPeople(rows, format, 'wd_', null);
+  _finishMasterParse(parsed, file.name);
+}
+
+// Multi-file parse — merges every repo master org file into one dataset.
+// Each file gets its own id namespace (wd_<fileIndex>_<row>) so ids never
+// collide, and a dept tag so the leader picker can show which file a
+// person came from once there's more than one.
+async function _parseMasterBuffers(buffers){
+  let parsed = [];
+  for(let fi = 0; fi < buffers.length; fi++){
+    const { label, buffer } = buffers[fi];
+    const { rows, format } = await parseXLSX(buffer);
+    parsed = parsed.concat(_rowsToPeople(rows, format, 'wd_' + fi + '_', buffers.length > 1 ? label : null));
+  }
+  _finishMasterParse(parsed, buffers.map(b => b.label).join(' + '));
+}
+
+let _lpLevels = null; // null = All
+
+function lpStepLevels(dir){
+  const MAX = 8;
+  if(_lpLevels === null){
+    if(dir < 0) _lpLevels = MAX;   // All → 8 → step down
+    else return;                    // All → can't go higher
+  } else {
+    _lpLevels = _lpLevels + dir;
+    if(_lpLevels >= MAX || _lpLevels < 1) _lpLevels = _lpLevels < 1 ? 1 : null;
+  }
+  const val = document.getElementById('lp-levels-val');
+  if(val) val.textContent = _lpLevels === null ? 'All' : _lpLevels;
+  // Style: dim the value when All
+  if(val) val.style.color = _lpLevels === null ? '#888' : '#023047';
+  if(val) val.style.fontWeight = _lpLevels === null ? '400' : '600';
+}
+
+function showLeaderPicker(){
+  _lpLevels = null; // reset to All each time
+  const val = document.getElementById('lp-levels-val');
+  if(val){ val.textContent = 'All'; val.style.color='#888'; val.style.fontWeight='400'; }
+  document.getElementById('leader-picker-overlay').classList.add('open');
+  setTimeout(() => {
+    const s = document.getElementById('leader-picker-search');
+    if(s) s.focus();
+  }, 50);
+}
+function hideLeaderPicker(){
+  document.getElementById('leader-picker-overlay').classList.remove('open');
+  document.getElementById('leader-picker-search').value = '';
+}
+
+function buildLeaderList(parsed, tempChildren){
+  // Build descendant counter
+  const memo = {};
+  function countDesc(id){
+    if(memo[id] !== undefined) return memo[id];
+    memo[id] = (tempChildren[id]||[]).reduce((s,c) => s + 1 + countDesc(c), 0);
+    return memo[id];
+  }
+
+  // Anyone with ≥1 direct report, sorted by last name
+  const leaders = parsed
+    .filter(p => p.name && (tempChildren[p.id]||[]).length > 0)
+    .map(p => ({
+      id:      p.id,
+      name:    p.name,
+      title:   p.title || '',
+      dept:    p.dept || '',
+      directs: (tempChildren[p.id]||[]).length,
+      total:   countDesc(p.id) + 1,  // include self
+    }))
+    .sort((a,b) => {
+      // Sort by last name
+      const lastName = n => n.trim().split(' ').slice(-1)[0].toLowerCase();
+      return lastName(a.name).localeCompare(lastName(b.name));
+    });
+
+  return leaders;
+}
+
+function renderLeaderRows(leaders){
+  const list = document.getElementById('leader-picker-list');
+  if(!leaders.length){
+    list.innerHTML = '<div style="padding:24px;text-align:center;color:#888;font-size:13px;">No matches found.</div>';
+    return;
+  }
+  list.innerHTML = leaders.map(l => `
+    <div class="lp-row" onclick="selectLeader('${l.id}')">
+      <div>
+        <div class="lp-name">${l.name}</div>
+        <div class="lp-title">${l.title}${l.dept ? `<span class="lp-dept-tag">${l.dept}</span>` : ''}</div>
+      </div>
+      <div class="lp-meta">
+        <span class="lp-meta-count">${l.total}</span> in org<br>
+        <span style="color:#aaa">${l.directs} direct${l.directs===1?'':'s'}</span>
+      </div>
+    </div>`).join('');
+}
+
+function filterLeaderPicker(query){
+  const q = query.toLowerCase().trim();
+  _lpFiltered = q
+    ? _lpLeaders.filter(l => l.name.toLowerCase().includes(q) || l.title.toLowerCase().includes(q) || l.dept.toLowerCase().includes(q))
+    : _lpLeaders.slice();
+  renderLeaderRows(_lpFiltered);
+}
+
+function isContingent(p){ return /\[C\]/i.test(p.name); }
+
+function selectLeader(id){
+  const root = _lpParsed.find(p => p.id === id);
+  if(!root) return;
+
+  // Collect subtree and check for contingent workers
+  function collectTree(id, set){ set.add(id); (_lpTempChildren[id]||[]).forEach(c => collectTree(c, set)); return set; }
+  const treeIds = collectTree(root.id, new Set());
+  const subtree = _lpParsed.filter(p => treeIds.has(p.id));
+  const contingentCount = subtree.filter(isContingent).length;
+
+  if(contingentCount === 0){
+    hideLeaderPicker();
+    buildOrgFromRoot(root, _lpParsed, _lpTempChildren, _lpFile, true, _lpLevels);
+    return;
+  }
+
+  // Show prompt inline in the picker list
+  document.getElementById('leader-picker-list').innerHTML = `
+    <div style="padding:28px 24px;text-align:center;">
+      <div style="font-size:22px;margin-bottom:10px;">👥</div>
+      <div style="font-size:13px;font-weight:600;color:#023047;margin-bottom:8px;">
+        Include contingent workers?
+      </div>
+      <div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:20px;">
+        This org has <b>${contingentCount} contingent worker${contingentCount===1?'':'s'}</b> (marked with <b>[C]</b>).<br>
+        They can clutter the chart — you can always reload to change this.
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button onclick="hideLeaderPicker();buildOrgFromRoot(_lpParsed.find(p=>p.id==='${id}'),_lpParsed,_lpTempChildren,_lpFile,false,_lpLevels)"
+          style="background:#023047;color:#fff;border:none;padding:9px 20px;border-radius:7px;
+                 font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+          Exclude (${contingentCount})
+        </button>
+        <button onclick="hideLeaderPicker();buildOrgFromRoot(_lpParsed.find(p=>p.id==='${id}'),_lpParsed,_lpTempChildren,_lpFile,true,_lpLevels)"
+          style="background:#f0f4f8;color:#023047;border:1px solid #c8d8e4;padding:9px 20px;border-radius:7px;
+                 font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">
+          Include all
+        </button>
+      </div>
+    </div>`;
+}
+
+function loadMasterWorkday(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  evt.target.value = '';
+  document.getElementById('leader-picker-list').innerHTML =
+    '<div id="leader-picker-loading">Parsing file…</div>';
+  document.getElementById('leader-picker-search').value = '';
+  showLeaderPicker();
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try { await _parseMasterBuffer(e.target.result, file); }
+    catch(err){
+      document.getElementById('leader-picker-list').innerHTML =
+        `<div style="padding:24px;text-align:center;color:#c0392b;font-size:13px;">⚠ ${err.message}</div>`;
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── Header dropdown logic ─────────────────────────────────────────────────────
+function toggleDd(panelId, btnId){
+  const panel = document.getElementById(panelId);
+  const btn   = document.getElementById(btnId);
+  const isOpen = panel.classList.contains('open');
+  closeDds();
+  if(!isOpen){
+    panel.classList.add('open');
+    btn.classList.add('dd-open');
+    // Position panel flush with button left edge (or right for view)
+    const rect = btn.getBoundingClientRect();
+    if(panelId === 'view-panel'){
+      panel.style.right  = (window.innerWidth - rect.right) + 'px';
+      panel.style.left   = 'auto';
+    } else {
+      panel.style.left   = rect.left + 'px';
+      panel.style.right  = 'auto';
+    }
+  }
+}
+function closeDds(){
+  document.querySelectorAll('.hdr-dd-panel').forEach(p => p.classList.remove('open'));
+  document.querySelectorAll('.hbtn.dd-open, .hbtn-icon.dd-open').forEach(b => b.classList.remove('dd-open'));
+}
+// Close dropdowns on outside click
+document.addEventListener('click', e => {
+  if(!e.target.closest('.hdr-dd') && !e.target.closest('#view-panel')) closeDds();
+});
+
+// ── Header subtitle (updates when chart loads) ────────────────────────────────
+function updateHeaderSub(){
+  const sub = document.getElementById('header-sub');
+  if(!sub) return;
+  if(!people[rootId]){ sub.textContent = 'No chart loaded'; return; }
+  const root = people[rootId];
+  const count = Object.keys(people).length;
+  sub.textContent = root.name + ' · ' + count + ' ' + (count === 1 ? 'person' : 'people');
+}
+
+function saveState(){
+  const snap = buildSnapshot();
+  snap.savedAt = new Date().toISOString();
+  localStorage.setItem('orgchart_v5', JSON.stringify(snap));
+  toast('✓ Saved to browser');
+}
+function loadState(){const raw=localStorage.getItem('orgchart_v5');if(!raw){alert('No browser save found.');return;}applySnapshot(JSON.parse(raw));render();setTimeout(zoomFit,120);toast('✓ Loaded from browser');}
+function onVSpacingChange(val){
+  vSpacingScale = val/100;
+  document.getElementById('vspacing-val').textContent = val+'%';
+  render();
+}
+function onHSpacingChange(val){
+  hSpacingScale = val/100;
+  document.getElementById('hspacing-val').textContent = val+'%';
+  render();
+}
+function resetColors(){if(!confirm('Reset all colors?'))return;nodeState={};render();}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// ANALYZE WITH CLAUDE
+// ─────────────────────────────────────────────────────────────────────────────
+function buildAnalysisPrompt(){
+  const today = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const allIds = Object.keys(people);
+
+  // Separate humans from AI agents (agents are tagged in nodeState)
+  const agentIds = new Set(allIds.filter(id => (nodeState[id]||'default') === 'agent'));
+  const humanIds = allIds.filter(id => !agentIds.has(id));
+  const openCount = humanIds.filter(id => people[id].name && people[id].name.toLowerCase().startsWith('open')).length;
+  const agentCount = agentIds.size;
+
+  // Serialize humans with correct managerId field
+  const humanRows = humanIds.map(id => {
+    const p = people[id];
+    const mgrName = p.managerId && people[p.managerId] ? people[p.managerId].name : '—';
+    const state = nodeState[id] || 'default';
+    let status = 'Active';
+    if (state === 'open')   status = 'Open Role';
+    if (state === 'hold')   status = 'Hold';
+    if (p.name && p.name.toLowerCase().startsWith('open')) status = 'Open Role';
+    return `${p.name} | ${p.title||'—'} | ${p.level||'—'} | ${mgrName} | ${status}`;
+  });
+
+  // Serialize AI agents separately
+  const agentRows = [...agentIds].map(id => {
+    const p = people[id];
+    const mgrName = p.managerId && people[p.managerId] ? people[p.managerId].name : '—';
+    return `${p.name} | ${p.title||'AI Agent'} | — | ${mgrName} | AI Agent`;
+  });
+
+  const agentSection = agentCount > 0
+    ? `\nAI AGENTS (${agentCount}) — listed separately, do not count as headcount or span:\n${agentRows.join('\n')}\n`
+    : '';
+
+  return `You are an organizational design advisor analyzing a org chart for a VP-level leader at a health technology company. The manager column is fully populated from the chart data — use it as ground truth for all reporting relationships. Do not infer or guess structure. Be direct and concise; skip preamble.
+
+Org data format: Name | Title | Level | Manager | Status
+Level scale: P1–P5 = individual contributors (ascending seniority); M1–M6 = managers (ascending seniority); M6 = VP.
+Status: Active | Open Role | Hold | AI Agent
+
+---
+
+1. SPAN OF CONTROL
+
+Part A — Per-manager span
+Calculate the org-wide average number of direct reports per manager.
+Benchmark against health technology companies:
+- Elite: 6–8
+- Healthy: 4–6
+- Watch: 3–4 (may signal over-management)
+- Problem: <3 or >9
+
+Flag only exceptions — managers meaningfully outside the healthy range. Skip anyone within normal bounds.
+
+Part B — Manager-to-IC density
+Calculate the ratio of managers to individual contributors across the whole org.
+Use this scale for a healthcare technology PM org:
+- 1:2–3   Too heavy. More leaders than the work justifies. Directors tend to do IC work. Signals consolidation opportunity.
+- 1:4–5   Defensible if complex. Works in high-coordination or high-regulation environments, but only if managers are operating strategically.
+- 1:5–7   Sweet spot for healthcare tech PM orgs. Right balance of oversight and IC empowerment.
+- 1:7–10  Lean but watchable. Efficient if the manager layer is strong and ICs are experienced. Can strain during large cross-org initiatives.
+- 1:10+   Too thin for this org's complexity. Managers can't meaningfully coach or coordinate at this ratio.
+
+State the current ratio, classify it, and note what it implies.
+
+2. ORG STRUCTURE & DESIGN
+- Layer count from VP to deepest IC
+- Overall shape assessment (flat/tall/mixed) and whether it fits the headcount
+- Flag any structural anomalies: orphaned nodes, inverted levels, single-direct-report managers
+- Note any team-size imbalances across peer functions
+
+3. RISK AREAS
+Cover only the top 3–4 genuine risks. Focus on: key person dependencies, open roles creating coverage gaps, and functions with no structural backup. Skip anything minor.
+
+4. AI TRANSFORMATION READINESS
+Do not analyze individual job titles. Instead assess the org as a whole:
+- How is this org structured for a world where AI agents handle increasing execution work? Consider the ratio of strategic/judgment roles to process/coordination roles.
+- Where in the structure is AI integration already visible (note any AI Agent nodes in the data)?
+- What structural changes would most accelerate AI adoption — e.g. consolidation, elevation of certain functions, reduction of coordination layers?
+- What is the single biggest structural risk as AI scales into this org?
+
+5. OVERALL ASSESSMENT
+Open with a one-line header in this exact format: [Org name] — [Top leader name] ([manager-to-IC ratio])
+Then two labeled sections, 2–3 bullets each, tight:
+
+Works:
+- [what is structurally sound]
+- [what is working well]
+
+Watch:
+- [top risk or concern]
+- [second risk or structural issue to monitor]
+- [optional third if genuinely significant]
+
+---
+
+ORG CHART DATA
+As of: ${today} | Headcount: ${humanIds.length} people${openCount > 0 ? ` (${openCount} open)` : ''}${agentCount > 0 ? ` + ${agentCount} AI agent${agentCount>1?'s':''}` : ''}
+
+${humanRows.join('\n')}${agentSection}`;
+}
+
+function copyPromptToClipboard(prompt){
+  return navigator.clipboard.writeText(prompt).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = prompt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  });
+}
+
+function copyAnalysisPrompt(){
+  if(!rootId || !people[rootId]){ toast('⚠ No chart loaded — load an org first.'); return; }
+  const prompt = buildAnalysisPrompt();
+  // Populate textarea
+  const ta = document.getElementById('analyze-textarea');
+  ta.value = prompt;
+  // Auto-copy then open modal
+  copyPromptToClipboard(prompt).then(()=>{
+    document.getElementById('analyze-overlay').classList.add('open');
+  });
+}
+
+function recopyprompt(){
+  const prompt = document.getElementById('analyze-textarea').value;
+  const btn = document.getElementById('analyze-copy-btn');
+  copyPromptToClipboard(prompt).then(()=>{
+    btn.textContent = '✓ Copied'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.innerHTML = '📋 Copy again'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function hideAnalyze(){
+  document.getElementById('analyze-overlay').classList.remove('open');
+}
+
+function analyzeOverlayClick(e){
+  if(e.target === document.getElementById('analyze-overlay')) hideAnalyze();
+}
+
+// UTILS
+// ─────────────────────────────────────────────────────────────────────────────
+let toastT;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+initData();
+
+// Wire download links to point at the current page URL
+(function(){
+  const url = window.location.href.split('?')[0];
+  ['download-link','header-download-link'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.href = url;
+  });
+})();
+
+// Show welcome screen if no browser save exists
+// Always show welcome on load — user chooses how to start
+render();
+showWelcome();
+
+// ── Rotating taglines ──────────────────────────────────────────────────────
+(function(){
+  const lines = [
+    'Your org chart. Not a 45-minute PowerPoint incident.',
+    'Move one box without destroying three others? Wild concept.',
+    'Org charts that don\'t fall apart when you touch them.',
+    'Built for people who\'ve ever screamed at a connector line.',
+    'Drag one box. Ruin everything. — not here.',
+    'Move one person. Nothing explodes. We swear.',
+    'Every box the same width. You\'re welcome.',
+    'Yes, we have trust issues with PowerPoint. Welcome to the support group.',
+  ];
+
+  // Shuffle on load so rotation order is different every session
+  for(let i = lines.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [lines[i], lines[j]] = [lines[j], lines[i]];
+  }
+  let idx = 0;
+
+  function rotateTag(elId){
+    const el = document.getElementById(elId);
+    if(!el) return;
+    el.style.opacity = '0';
+    setTimeout(()=>{
+      idx = (idx + 1) % lines.length;
+      el.textContent = lines[idx];
+      el.style.opacity = '1';
+    }, 500);
+  }
+
+  // Initialise both elements to first line
+  ['header-sub','welcome-sub'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el && !el.dataset.managed){
+      el.dataset.managed = '1';
+      el.style.transition = 'opacity .5s ease';
+      el.textContent = lines[0];
+    }
+  });
+
+  // Rotate every 4 seconds, both elements in sync
+  setInterval(()=>{
+    idx = (idx + 1) % lines.length;
+    ['header-sub','welcome-sub'].forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.style.opacity = '0';
+      setTimeout(()=>{ el.textContent = lines[idx]; el.style.opacity = '1'; }, 500);
+    });
+  }, 4000);
+})();
+</script>
+</body>
+</html>
